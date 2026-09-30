@@ -1,0 +1,14 @@
+asr-test312/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+.env
+*.db
+node_modules/
+*.dll
+*.onnx
+*.pt
+*.bin
+*.gguf
