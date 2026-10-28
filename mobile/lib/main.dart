@@ -1,10 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
-import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+
+import 'l10n/app_localizations.dart';
 import 'infrastructure/auth/session_storage.dart';
+import 'infrastructure/settings/language_storage.dart';
+import 'presentation/screens/language_selection_screen.dart';
 import 'package:mobile/infrastructure/database/app_database.dart';
 import 'package:mobile/domain/repositories/health_record_local_repository.dart';
 
@@ -16,30 +21,105 @@ void main() async {
 // ============================================================
 // CONFIGURATION
 // ============================================================
+
 const String baseUrl = 'http://192.168.113.74:8000';
 
 // ============================================================
 // AASHANET APP
 // ============================================================
 
-class AashaNetApp extends StatelessWidget {
+class AashaNetApp extends StatefulWidget {
   const AashaNetApp({super.key});
 
   @override
+  State<AashaNetApp> createState() => _AashaNetAppState();
+}
+
+class _AashaNetAppState extends State<AashaNetApp> {
+  final LanguageStorage _languageStorage = LanguageStorage();
+
+  Locale? _selectedLocale;
+  bool _isLoadingLanguage = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLanguage();
+  }
+
+  Future<void> _loadSavedLanguage() async {
+    final languageCode = await _languageStorage.getLanguage();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (languageCode != null) {
+        _selectedLocale = Locale(languageCode);
+      }
+
+      _isLoadingLanguage = false;
+    });
+  }
+
+  void _onLanguageSelected(Locale locale) {
+    setState(() {
+      _selectedLocale = locale;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoadingLanguage) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'AASHANet AI',
+        home: const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AASHANet AI',
+
+      // Selected app language.
+      locale: _selectedLocale ?? const Locale('en'),
+
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+
+      supportedLocales: const [
+        Locale('en'),
+        Locale('kn'),
+        Locale('hi'),
+      ],
+
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-        ),
         useMaterial3: true,
+        colorSchemeSeed: Colors.teal,
       ),
-      home: const StartupScreen(),
+
+      home: _selectedLocale == null
+          ? LanguageSelectionScreen(
+              onLanguageSelected: _onLanguageSelected,
+            )
+          : const StartupScreen(),
     );
   }
 }
+
+// ============================================================
+// STARTUP SCREEN
+// ============================================================
 
 class StartupScreen extends StatelessWidget {
   const StartupScreen({super.key});
@@ -57,9 +137,6 @@ class StartupScreen extends StatelessWidget {
       return const LoginScreen();
     }
 
-    // Validate the saved JWT with the backend before opening Home.
-    // AASHANet AI is offline-first, so a temporary network failure
-    // must not force the user to log in again.
     try {
       final response = await http
           .get(
@@ -68,7 +145,9 @@ class StartupScreen extends StatelessWidget {
               'Authorization': 'Bearer $accessToken',
             },
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(
+            const Duration(seconds: 5),
+          );
 
       debugPrint(
         'SESSION VALIDATION STATUS: ${response.statusCode}',
@@ -84,16 +163,20 @@ class StartupScreen extends StatelessWidget {
       }
 
       if (response.statusCode == 401) {
-        debugPrint('SAVED SESSION EXPIRED OR INVALID');
+        debugPrint(
+          'SAVED SESSION EXPIRED OR INVALID',
+        );
+
         await SessionStorage.clearSession();
+
         return const LoginScreen();
       }
 
-      // For other server responses, preserve the session because the
-      // user may still need to work with locally stored records.
       debugPrint(
-        'SESSION VALIDATION UNEXPECTED RESPONSE: ${response.body}',
+        'SESSION VALIDATION UNEXPECTED RESPONSE: '
+        '${response.body}',
       );
+
       return HomeScreen(
         username: username,
         role: role,
@@ -101,8 +184,6 @@ class StartupScreen extends StatelessWidget {
         accessToken: accessToken,
       );
     } catch (e) {
-      // No network/server connection: keep the existing session so the
-      // offline-first application can still open and use local data.
       debugPrint(
         'SESSION VALIDATION NETWORK ERROR: $e',
       );
@@ -121,7 +202,8 @@ class StartupScreen extends StatelessWidget {
     return FutureBuilder<Widget>(
       future: _checkSession(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState ==
+            ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -133,7 +215,8 @@ class StartupScreen extends StatelessWidget {
           return const LoginScreen();
         }
 
-        return snapshot.data ?? const LoginScreen();
+        return snapshot.data ??
+            const LoginScreen();
       },
     );
   }
@@ -147,10 +230,12 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() =>
+      _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState
+    extends State<LoginScreen> {
   final TextEditingController usernameController =
       TextEditingController();
 
@@ -168,15 +253,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> login() async {
-    final username = usernameController.text.trim();
-    final password = passwordController.text;
+    final username =
+        usernameController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter username and password'),
+    final password =
+        passwordController.text;
+
+    final l10n =
+        AppLocalizations.of(context)!;
+
+    if (username.isEmpty ||
+        password.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.enterUsernamePassword,
+          ),
         ),
       );
+
       return;
     }
 
@@ -186,9 +282,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse(
+          '$baseUrl/auth/login',
+        ),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type':
+              'application/json',
         },
         body: jsonEncode({
           'username': username,
@@ -197,12 +296,20 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data =
+            jsonDecode(response.body);
 
-        final accessToken = data['access_token'];
-        final loggedInUsername = data['username'];
-        final role = data['role'];
-        final fullName = data['full_name'];
+        final accessToken =
+            data['access_token'];
+
+        final loggedInUsername =
+            data['username'];
+
+        final role =
+            data['role'];
+
+        final fullName =
+            data['full_name'];
 
         await SessionStorage.saveSession(
           accessToken: accessToken,
@@ -218,41 +325,52 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              username: loggedInUsername,
+            builder: (context) =>
+                HomeScreen(
+              username:
+                  loggedInUsername,
               role: role,
               fullName: fullName,
-              accessToken: accessToken,
+              accessToken:
+                  accessToken,
             ),
           ),
         );
       } else {
-        final data = jsonDecode(response.body);
+        final data =
+            jsonDecode(response.body);
 
         final errorMessage =
-            data['detail'] ?? 'Login failed';
+            data['detail'] ??
+                l10n.loginFailed;
 
         if (!mounted) {
           return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text(
+              errorMessage.toString(),
+            ),
           ),
         );
       }
     } catch (e) {
-      debugPrint('LOGIN CONNECTION ERROR: $e');
+      debugPrint(
+        'LOGIN CONNECTION ERROR: $e',
+      );
 
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
           content: Text(
-            'Could not connect to server',
+            l10n.couldNotConnectServer,
           ),
         ),
       );
@@ -267,19 +385,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n =
+        AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding:
+                const EdgeInsets.all(24),
             child: Column(
               children: [
                 Container(
                   width: 90,
                   height: 90,
-                  decoration: BoxDecoration(
+                  decoration:
+                      BoxDecoration(
                     color: Colors.teal,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius:
+                        BorderRadius.circular(
+                      20,
+                    ),
                   ),
                   child: const Icon(
                     Icons.health_and_safety,
@@ -287,44 +413,76 @@ class _LoginScreenState extends State<LoginScreen> {
                     size: 55,
                   ),
                 ),
+
                 const SizedBox(height: 24),
+
                 const Text(
                   'AASHANet AI',
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
+
                 const SizedBox(height: 8),
-                const Text(
-                  'AI-Powered Voice-Based Health Assistant',
-                  textAlign: TextAlign.center,
+
+                Text(
+                  l10n.loginSubtitle,
+                  textAlign:
+                      TextAlign.center,
                 ),
+
                 const SizedBox(height: 40),
+
                 TextField(
-                  controller: usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    hintText: 'Enter your username',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  controller:
+                      usernameController,
+                  decoration:
+                      InputDecoration(
+                    labelText:
+                        l10n.username,
+                    hintText:
+                        l10n.usernameHint,
+                    prefixIcon:
+                        const Icon(
+                      Icons.person,
+                    ),
+                    border:
+                        OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                        12,
+                      ),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 16),
+
                 TextField(
-                  controller: passwordController,
-                  obscureText: obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
+                  controller:
+                      passwordController,
+                  obscureText:
+                      obscurePassword,
+                  decoration:
+                      InputDecoration(
+                    labelText:
+                        l10n.password,
+                    hintText:
+                        l10n.passwordHint,
+                    prefixIcon:
+                        const Icon(
+                      Icons.lock,
+                    ),
+                    suffixIcon:
+                        IconButton(
                       icon: Icon(
                         obscurePassword
                             ? Icons.visibility
-                            : Icons.visibility_off,
+                            : Icons
+                                .visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -333,36 +491,56 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    border:
+                        OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                        12,
+                      ),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
+
                 SizedBox(
-                  width: double.infinity,
+                  width:
+                      double.infinity,
                   height: 52,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : login,
+                  child:
+                      ElevatedButton(
+                    onPressed:
+                        isLoading
+                            ? null
+                            : login,
                     child: isLoading
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(),
+                            child:
+                                CircularProgressIndicator(),
                           )
-                        : const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
+                        : Text(
+                            l10n.login,
+                            style:
+                                const TextStyle(
+                              fontSize:
+                                  17,
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
                             ),
                           ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
-                const Text(
-                  'Supporting ASHA workers in rural healthcare',
-                  textAlign: TextAlign.center,
+
+                Text(
+                  l10n.loginSupportText,
+                  textAlign:
+                      TextAlign.center,
                 ),
               ],
             ),
@@ -393,118 +571,165 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n =
+        AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AASHANet AI'),
+        title: const Text(
+          'AASHANet AI',
+        ),
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding:
+            const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Welcome',
-              style: TextStyle(
+            Text(
+              l10n.welcome,
+              style:
+                  const TextStyle(
                 fontSize: 18,
               ),
             ),
+
             const SizedBox(height: 8),
+
             Text(
               fullName,
-              style: const TextStyle(
+              style:
+                  const TextStyle(
                 fontSize: 28,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                    FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 8),
+
             Text(
-              'Role: $role',
-              style: const TextStyle(
+              '${l10n.role}: $role',
+              style:
+                  const TextStyle(
                 fontSize: 16,
               ),
             ),
+
             const SizedBox(height: 30),
+
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 60,
-              child: ElevatedButton.icon(
+              child:
+                  ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RecordScreen(
-                        accessToken: accessToken,
+                      builder:
+                          (context) =>
+                              RecordScreen(
+                        accessToken:
+                            accessToken,
                       ),
                     ),
                   );
                 },
-                icon: const Icon(Icons.note_add),
-                label: const Text(
-                  'Record',
-                  style: TextStyle(
+                icon: const Icon(
+                  Icons.note_add,
+                ),
+                label: Text(
+                  l10n.record,
+                  style:
+                      const TextStyle(
                     fontSize: 17,
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 15),
+
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 60,
-              child: ElevatedButton.icon(
+              child:
+                  ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const LocalRecordsScreen(),
+                      builder:
+                          (context) =>
+                              const LocalRecordsScreen(),
                     ),
                   );
                 },
                 icon: const Icon(
                   Icons.folder_open,
                 ),
-                label: const Text(
-                  'Data Showing',
-                  style: TextStyle(
+                label: Text(
+                  l10n.dataShowing,
+                  style:
+                      const TextStyle(
                     fontSize: 17,
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 15),
+
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 60,
-              child: ElevatedButton.icon(
+              child:
+                  ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RecordScreen(
-                        accessToken: accessToken,
+                      builder:
+                          (context) =>
+                              RecordScreen(
+                        accessToken:
+                            accessToken,
                       ),
                     ),
                   );
                 },
-                icon: const Icon(Icons.keyboard),
-                label: const Text(
-                  'Typing Option',
-                  style: TextStyle(
+                icon: const Icon(
+                  Icons.keyboard,
+                ),
+                label: Text(
+                  l10n.typingOption,
+                  style:
+                      const TextStyle(
                     fontSize: 17,
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 15),
+
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 60,
-              child: ElevatedButton.icon(
+              child:
+                  ElevatedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                  ScaffoldMessenger
+                          .of(context)
+                      .showSnackBar(
+                    SnackBar(
                       content: Text(
                         'Tasks feature coming next',
                       ),
@@ -514,9 +739,10 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(
                   Icons.task_alt,
                 ),
-                label: const Text(
-                  'Tasks',
-                  style: TextStyle(
+                label: Text(
+                  l10n.tasks,
+                  style:
+                      const TextStyle(
                     fontSize: 17,
                   ),
                 ),
@@ -546,11 +772,13 @@ class RecordScreen extends StatefulWidget {
       _RecordScreenState();
 }
 
-class _RecordScreenState extends State<RecordScreen> {
+class _RecordScreenState
+    extends State<RecordScreen> {
   final AudioRecorder _audioRecorder =
       AudioRecorder();
 
-  final TextEditingController rawRecordController =
+  final TextEditingController
+      rawRecordController =
       TextEditingController();
 
   bool _isRecording = false;
@@ -584,10 +812,6 @@ class _RecordScreenState extends State<RecordScreen> {
     super.dispose();
   }
 
-  // ==========================================================
-  // VOICE RECORDING
-  // ==========================================================
-
   Future<void> toggleRecording() async {
     try {
       if (_isRecording) {
@@ -604,10 +828,12 @@ class _RecordScreenState extends State<RecordScreen> {
         });
 
         if (path != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
             const SnackBar(
-              content:
-                  Text('Voice recording saved'),
+              content: Text(
+                'Voice recording saved',
+              ),
             ),
           );
         }
@@ -616,14 +842,16 @@ class _RecordScreenState extends State<RecordScreen> {
       }
 
       final hasPermission =
-          await _audioRecorder.hasPermission();
+          await _audioRecorder
+              .hasPermission();
 
       if (!hasPermission) {
         if (!mounted) {
           return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
           const SnackBar(
             content: Text(
               'Microphone permission is required',
@@ -657,9 +885,12 @@ class _RecordScreenState extends State<RecordScreen> {
         _audioPath = null;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
-          content: Text('Recording started'),
+          content: Text(
+            'Recording started',
+          ),
         ),
       );
     } catch (e) {
@@ -675,29 +906,25 @@ class _RecordScreenState extends State<RecordScreen> {
         _isRecording = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         SnackBar(
-          content:
-              Text('Could not record voice: $e'),
+          content: Text(
+            'Could not record voice: $e',
+          ),
         ),
       );
     }
   }
 
-  // ==========================================================
-  // PROCESS RECORD
-  // ==========================================================
-
   Future<void> processRecord() async {
     final rawText =
         rawRecordController.text.trim();
 
-    // --------------------------------------------------------
-    // STEP 0: VALIDATE INPUT
-    // --------------------------------------------------------
-
-    if (rawText.isEmpty && _audioPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    if (rawText.isEmpty &&
+        _audioPath == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Please enter or record the health information',
@@ -712,10 +939,6 @@ class _RecordScreenState extends State<RecordScreen> {
       isProcessing = true;
     });
 
-    // --------------------------------------------------------
-    // STEP 1: PREPARE LOCAL RECORD
-    // --------------------------------------------------------
-
     final serverRawInput =
         rawText.isEmpty
             ? '[Voice recording]'
@@ -726,20 +949,17 @@ class _RecordScreenState extends State<RecordScreen> {
             ? 'Kannada'
             : 'en';
 
-    // Create a local ID before contacting the backend.
     final localRecordId =
         'local-${DateTime.now().millisecondsSinceEpoch}';
 
-    // --------------------------------------------------------
-    // STEP 2: SAVE LOCALLY FIRST
-    // --------------------------------------------------------
-
     try {
-      await _localRepository.saveHealthRecord(
+      await _localRepository
+          .saveHealthRecord(
         id: localRecordId,
         workerId: null,
         rawInput: serverRawInput,
-        inputLanguage: inputLanguage,
+        inputLanguage:
+            inputLanguage,
         audioPath: _audioPath,
       );
 
@@ -749,7 +969,8 @@ class _RecordScreenState extends State<RecordScreen> {
       );
 
       debugPrint(
-        'LOCAL RECORD ID: $localRecordId',
+        'LOCAL RECORD ID: '
+        '$localRecordId',
       );
     } catch (e) {
       debugPrint(
@@ -764,28 +985,19 @@ class _RecordScreenState extends State<RecordScreen> {
         isProcessing = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         SnackBar(
           content: Text(
             'Could not save record locally: $e',
           ),
-          duration:
-              const Duration(seconds: 5),
         ),
       );
 
       return;
     }
 
-    // --------------------------------------------------------
-    // STEP 3: TRY BACKEND PROCESSING
-    // --------------------------------------------------------
-
     try {
-      // ------------------------------------------------------
-      // STEP 3A: CREATE SERVER RECORD
-      // ------------------------------------------------------
-
       final createResponse =
           await http.post(
         Uri.parse(
@@ -815,8 +1027,10 @@ class _RecordScreenState extends State<RecordScreen> {
         '${createResponse.body}',
       );
 
-      if (createResponse.statusCode != 200 &&
-          createResponse.statusCode != 201) {
+      if (createResponse.statusCode !=
+              200 &&
+          createResponse.statusCode !=
+              201) {
         throw Exception(
           'Failed to create health record: '
           '${createResponse.body}',
@@ -846,56 +1060,20 @@ class _RecordScreenState extends State<RecordScreen> {
         );
       }
 
-      debugPrint(
-        'SERVER RECORD ID: $recordId',
+      await _localRepository
+          .linkServerRecord(
+        localRecordId:
+            localRecordId,
+        serverRecordId:
+            recordId.toString(),
+        workerId:
+            workerId.toString(),
       );
 
-      debugPrint(
-        'SERVER WORKER ID: $workerId',
-      );
-
-      // ------------------------------------------------------
-      // STEP 3A-1: LINK LOCAL RECORD TO SERVER RECORD
-      // ------------------------------------------------------
-      //
-      // Keep the local SQLite ID as the local primary key.
-      // Store the PostgreSQL record ID and authenticated worker
-      // ID separately so the local record can be synchronized
-      // safely without replacing its primary key.
-      //
-      // The record is NOT marked as synced yet.
-      // Sync is completed only after Confirm & Save succeeds.
-      // ------------------------------------------------------
-
-      await _localRepository.linkServerRecord(
-        localRecordId: localRecordId,
-        serverRecordId: recordId.toString(),
-        workerId: workerId.toString(),
-      );
-
-      debugPrint(
-        'LOCAL RECORD LINKED: '
-        'local=$localRecordId '
-        'server=$recordId '
-        'worker=$workerId',
-      );
-
-      // ------------------------------------------------------
-      // STEP 3B: PROCESS RECORD
-      // ------------------------------------------------------
-
-      late Map<String, dynamic> processedData;
-
-      // ------------------------------------------------------
-      // STEP 3B-A: AUDIO → GEMINI
-      // ------------------------------------------------------
+      late Map<String, dynamic>
+          processedData;
 
       if (_audioPath != null) {
-        debugPrint(
-          'PROCESSING AUDIO: '
-          '${_audioPath!}',
-        );
-
         final request =
             http.MultipartRequest(
           'POST',
@@ -914,7 +1092,8 @@ class _RecordScreenState extends State<RecordScreen> {
             'Kannada';
 
         request.files.add(
-          await http.MultipartFile.fromPath(
+          await http.MultipartFile
+              .fromPath(
             'audio',
             _audioPath!,
           ),
@@ -924,7 +1103,8 @@ class _RecordScreenState extends State<RecordScreen> {
             await request.send();
 
         final response =
-            await http.Response.fromStream(
+            await http.Response
+                .fromStream(
           streamedResponse,
         );
 
@@ -938,7 +1118,8 @@ class _RecordScreenState extends State<RecordScreen> {
           '${response.body}',
         );
 
-        if (response.statusCode != 200) {
+        if (response.statusCode !=
+            200) {
           throw Exception(
             'Failed to process audio: '
             '${response.body}',
@@ -949,13 +1130,7 @@ class _RecordScreenState extends State<RecordScreen> {
             jsonDecode(
           response.body,
         );
-      }
-
-      // ------------------------------------------------------
-      // STEP 3B-B: TYPED TEXT → EXISTING PROCESS
-      // ------------------------------------------------------
-
-      else {
+      } else {
         final processResponse =
             await http.post(
           Uri.parse(
@@ -980,7 +1155,8 @@ class _RecordScreenState extends State<RecordScreen> {
           '${processResponse.body}',
         );
 
-        if (processResponse.statusCode != 200) {
+        if (processResponse.statusCode !=
+            200) {
           throw Exception(
             'Failed to process health record: '
             '${processResponse.body}',
@@ -992,10 +1168,6 @@ class _RecordScreenState extends State<RecordScreen> {
           processResponse.body,
         );
       }
-
-      // ------------------------------------------------------
-      // STEP 4: ONLINE PROCESSING SUCCESS
-      // ------------------------------------------------------
 
       if (!mounted) {
         return;
@@ -1018,10 +1190,6 @@ class _RecordScreenState extends State<RecordScreen> {
         ),
       );
     } catch (e) {
-      // ------------------------------------------------------
-      // STEP 5: BACKEND UNAVAILABLE
-      // ------------------------------------------------------
-
       debugPrint(
         'BACKEND PROCESSING ERROR: $e',
       );
@@ -1034,7 +1202,8 @@ class _RecordScreenState extends State<RecordScreen> {
         isProcessing = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Record saved locally. '
@@ -1044,17 +1213,8 @@ class _RecordScreenState extends State<RecordScreen> {
               Duration(seconds: 5),
         ),
       );
-
-      debugPrint(
-        'OFFLINE RECORD PENDING: '
-        '$localRecordId',
-      );
     }
   }
-
-  // ==========================================================
-  // RECORD UI
-  // ==========================================================
 
   @override
   Widget build(BuildContext context) {
@@ -1087,24 +1247,30 @@ class _RecordScreenState extends State<RecordScreen> {
             ),
             const SizedBox(height: 25),
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 100,
-              child: OutlinedButton(
+              child:
+                  OutlinedButton(
                 onPressed:
                     isProcessing
                         ? null
                         : toggleRecording,
                 child: Column(
                   mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      MainAxisAlignment
+                          .center,
                   children: [
                     Icon(
                       _isRecording
-                          ? Icons.stop_circle
+                          ? Icons
+                              .stop_circle
                           : Icons.mic,
                       size: 40,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(
+                      height: 8,
+                    ),
                     Text(
                       _isRecording
                           ? 'Tap to Stop Recording'
@@ -1113,28 +1279,26 @@ class _RecordScreenState extends State<RecordScreen> {
                           const TextStyle(
                         fontSize: 16,
                         fontWeight:
-                            FontWeight.bold,
+                            FontWeight
+                                .bold,
                       ),
                     ),
                     if (_isRecording) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(
+                        height: 4,
+                      ),
                       const Text(
                         'Recording...',
-                        style:
-                            TextStyle(
-                          fontSize: 13,
-                        ),
                       ),
                     ],
                     if (!_isRecording &&
-                        _audioPath != null) ...[
-                      const SizedBox(height: 4),
+                        _audioPath !=
+                            null) ...[
+                      const SizedBox(
+                        height: 4,
+                      ),
                       const Text(
                         'Recording saved',
-                        style:
-                            TextStyle(
-                          fontSize: 13,
-                        ),
                       ),
                     ],
                   ],
@@ -1157,8 +1321,7 @@ class _RecordScreenState extends State<RecordScreen> {
                 hintText:
                     'Example: Ramesh is 42 years old '
                     'and has cough and fever for three days',
-                alignLabelWithHint:
-                    true,
+                alignLabelWithHint: true,
                 prefixIcon:
                     const Padding(
                   padding:
@@ -1180,7 +1343,8 @@ class _RecordScreenState extends State<RecordScreen> {
             ),
             const SizedBox(height: 25),
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 55,
               child:
                   ElevatedButton.icon(
@@ -1222,7 +1386,8 @@ class _RecordScreenState extends State<RecordScreen> {
 // REVIEW RECORD SCREEN
 // ============================================================
 
-class ReviewRecordScreen extends StatefulWidget {
+class ReviewRecordScreen
+    extends StatefulWidget {
   const ReviewRecordScreen({
     super.key,
     required this.accessToken,
@@ -1230,7 +1395,6 @@ class ReviewRecordScreen extends StatefulWidget {
   });
 
   final String accessToken;
-
   final Map<String, dynamic>
       recordData;
 
@@ -1264,7 +1428,8 @@ class _ReviewRecordScreenState
         (widget.recordData[
                     'ai_suggested_data']
                 as Map<String, dynamic>?) ??
-            (widget.recordData['analyzed']
+            (widget.recordData[
+                    'analyzed']
                 as Map<String, dynamic>?) ??
             {};
 
@@ -1311,10 +1476,6 @@ class _ReviewRecordScreenState
 
     super.dispose();
   }
-
-  // ==========================================================
-  // CONFIRM RECORD
-  // ==========================================================
 
   Future<void> confirmRecord() async {
     final recordId =
@@ -1431,7 +1592,8 @@ class _ReviewRecordScreenState
         '${response.body}',
       );
 
-      if (response.statusCode != 200) {
+      if (response.statusCode !=
+          200) {
         throw Exception(
           'Failed to confirm record: '
           '${response.body}',
@@ -1461,8 +1623,7 @@ class _ReviewRecordScreenState
                 ),
               ],
             ),
-            content:
-                const Text(
+            content: const Text(
               'The health record has been '
               'reviewed and successfully '
               'confirmed.',
@@ -1509,28 +1670,25 @@ class _ReviewRecordScreenState
           content: Text(
             'Could not save record: $e',
           ),
-          duration:
-              const Duration(seconds: 5),
         ),
       );
     }
   }
 
-  // ==========================================================
-  // REVIEW UI
-  // ==========================================================
-
   @override
   Widget build(BuildContext context) {
     final rawRecord =
-        widget.recordData['transcript']
+        widget.recordData[
+                    'transcript']
                 ?.toString() ??
-            widget.recordData['raw_input']
+            widget.recordData[
+                    'raw_input']
                 ?.toString() ??
             '';
 
     final aiStatus =
-        widget.recordData['ai_status']
+        widget.recordData[
+                    'ai_status']
                 ?.toString() ??
             '';
 
@@ -1577,12 +1735,14 @@ class _ReviewRecordScreenState
             ),
             const SizedBox(height: 8),
             Container(
-              width: double.infinity,
+              width:
+                  double.infinity,
               padding:
                   const EdgeInsets.all(15),
               decoration:
                   BoxDecoration(
-                border: Border.all(
+                border:
+                    Border.all(
                   color: Colors.grey,
                 ),
                 borderRadius:
@@ -1669,12 +1829,14 @@ class _ReviewRecordScreenState
             ),
             const SizedBox(height: 20),
             Container(
-              width: double.infinity,
+              width:
+                  double.infinity,
               padding:
                   const EdgeInsets.all(15),
               decoration:
                   BoxDecoration(
-                color: Colors.teal.withValues(
+                color:
+                    Colors.teal.withValues(
                   alpha: 0.1,
                 ),
                 borderRadius:
@@ -1704,7 +1866,8 @@ class _ReviewRecordScreenState
             ),
             const SizedBox(height: 30),
             SizedBox(
-              width: double.infinity,
+              width:
+                  double.infinity,
               height: 55,
               child:
                   ElevatedButton.icon(
