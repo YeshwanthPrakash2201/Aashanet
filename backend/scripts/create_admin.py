@@ -1,10 +1,10 @@
 """
-Create an account (admin by default), or promote an existing user to admin.
+Create an account with an explicit role, or promote an existing user to admin.
 
 Run from the `backend` folder with the virtual environment's Python:
 
-    .\\.venv\\Scripts\\python.exe -m scripts.create_admin
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin --role asha_worker
+    .\\.venv\\Scripts\\python.exe -m scripts.create_admin --role admin
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin --promote USERNAME
 
 The password is typed into the terminal (it is not shown on screen)
@@ -121,10 +121,17 @@ def main() -> int:
     parser.add_argument(
         "--role",
         choices=ROLES,
-        default=ADMIN_ROLE,
-        help="role for the new account (default: admin)",
+        help="role for the new account (required unless --promote is used)",
     )
     args = parser.parse_args()
+
+    # No default role on purpose: silently creating an admin when a
+    # worker account was intended is an easy and risky mistake.
+    if not args.promote and not args.role:
+        parser.error(
+            "choose a role: --role asha_worker (phone users) "
+            "or --role admin (account managers)"
+        )
 
     db = get_connection()
 
