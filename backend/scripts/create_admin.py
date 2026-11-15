@@ -1,9 +1,10 @@
 """
-Create an administrator account, or promote an existing user to admin.
+Create an account (admin by default), or promote an existing user to admin.
 
 Run from the `backend` folder with the virtual environment's Python:
 
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin
+    .\\.venv\\Scripts\\python.exe -m scripts.create_admin --role asha_worker
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin --promote USERNAME
 
 The password is typed into the terminal (it is not shown on screen)
@@ -22,6 +23,14 @@ from app.modules.auth.application.user_service import UserService
 from app.modules.auth.infrastructure.user_repository import UserRepository
 
 MIN_PASSWORD_LENGTH = 10
+
+# Role names in use. `asha_worker` is the one most existing accounts use.
+ROLES = [ADMIN_ROLE, "asha_worker"]
+
+DEFAULTS = {
+    ADMIN_ROLE: ("admin", "System Administrator"),
+    "asha_worker": ("", ""),
+}
 
 
 def ask(prompt: str, default: str | None = None) -> str:
@@ -47,12 +56,13 @@ def ask_password() -> str:
         return password
 
 
-def create_admin(service: UserService) -> int:
-    username = ask("Admin username", "admin")
-    full_name = ask("Full name", "System Administrator")
+def create_account(service: UserService, role: str) -> int:
+    default_username, default_full_name = DEFAULTS[role]
+    username = ask(f"Username for the new {role} account", default_username or None)
+    full_name = ask("Full name", default_full_name or None)
 
-    if not username:
-        print("Username cannot be empty.")
+    if not username or not full_name:
+        print("Username and full name cannot be empty.")
         return 1
 
     if service.get_user_by_username(username):
@@ -66,14 +76,14 @@ def create_admin(service: UserService) -> int:
         service.create_user(
             username=username,
             password=password,
-            role=ADMIN_ROLE,
+            role=role,
             full_name=full_name,
         )
     except UniqueViolation:
         print(f"User '{username}' already exists.")
         return 1
 
-    print(f"Created admin user '{username}'.")
+    print(f"Created {role} user '{username}'.")
     return 0
 
 
@@ -108,6 +118,12 @@ def main() -> int:
         metavar="USERNAME",
         help="make an existing user an admin instead of creating a new one",
     )
+    parser.add_argument(
+        "--role",
+        choices=ROLES,
+        default=ADMIN_ROLE,
+        help="role for the new account (default: admin)",
+    )
     args = parser.parse_args()
 
     db = get_connection()
@@ -118,7 +134,7 @@ def main() -> int:
         if args.promote:
             return promote(db, service, args.promote)
 
-        return create_admin(service)
+        return create_account(service, args.role)
 
     finally:
         db.close()
