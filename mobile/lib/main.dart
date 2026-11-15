@@ -773,7 +773,9 @@ class RecordScreen extends StatefulWidget {
 }
 
 class _RecordScreenState
-    extends State<RecordScreen> {
+ extends State<RecordScreen> {
+   AppLocalizations get l10n =>
+        AppLocalizations.of(context)!;
   final AudioRecorder _audioRecorder =
       AudioRecorder();
 
@@ -830,9 +832,9 @@ class _RecordScreenState
         if (path != null) {
           ScaffoldMessenger.of(context)
               .showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Voice recording saved',
+                l10n.recordingSaved,
               ),
             ),
           );
@@ -852,9 +854,9 @@ class _RecordScreenState
 
         ScaffoldMessenger.of(context)
             .showSnackBar(
-          const SnackBar(
+           SnackBar(
             content: Text(
-              'Microphone permission is required',
+              l10n.microphonePermissionRequired,
             ),
           ),
         );
@@ -887,9 +889,9 @@ class _RecordScreenState
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Recording started',
+            l10n.recordingStarted,
           ),
         ),
       );
@@ -910,9 +912,28 @@ class _RecordScreenState
           .showSnackBar(
         SnackBar(
           content: Text(
-            'Could not record voice: $e',
+            '${l10n.couldNotRecordVoice}: $e',
           ),
         ),
+      );
+    }
+  }
+
+  Future<void> _markLocalRecord(
+    String localRecordId, {
+    required bool synced,
+  }) async {
+    try {
+      if (synced) {
+        await _localRepository
+            .markAsSynced(localRecordId);
+      } else {
+        await _localRepository
+            .markAsFailed(localRecordId);
+      }
+    } catch (e) {
+      debugPrint(
+        'LOCAL SYNC STATUS UPDATE ERROR: $e',
       );
     }
   }
@@ -925,9 +946,9 @@ class _RecordScreenState
         _audioPath == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(
-        const SnackBar(
+         SnackBar(
           content: Text(
-            'Please enter or record the health information',
+            l10n.pleaseEnterOrRecordHealthInfo,
           ),
         ),
       );
@@ -989,7 +1010,7 @@ class _RecordScreenState
           .showSnackBar(
         SnackBar(
           content: Text(
-            'Could not save record locally: $e',
+            '${l10n.couldNotSaveRecordLocally}: $e',
           ),
         ),
       );
@@ -1015,6 +1036,8 @@ class _RecordScreenState
           'input_language':
               inputLanguage,
         }),
+      ).timeout(
+        const Duration(seconds: 20),
       );
 
       debugPrint(
@@ -1186,12 +1209,21 @@ class _RecordScreenState
                 widget.accessToken,
             recordData:
                 processedData,
+            localRecordId:
+                localRecordId,
+            localRepository:
+                _localRepository,
           ),
         ),
       );
     } catch (e) {
       debugPrint(
         'BACKEND PROCESSING ERROR: $e',
+      );
+
+      await _markLocalRecord(
+        localRecordId,
+        synced: false,
       );
 
       if (!mounted) {
@@ -1204,13 +1236,11 @@ class _RecordScreenState
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Record saved locally. '
-            'It will be processed when the connection is available.',
+            l10n.recordSavedLocallyOffline,
           ),
-          duration:
-              Duration(seconds: 5),
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -1220,8 +1250,8 @@ class _RecordScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Record Health Visit',
+        title: Text(
+          l10n.recordHealthVisit,
         ),
       ),
       body: SingleChildScrollView(
@@ -1231,19 +1261,17 @@ class _RecordScreenState
           crossAxisAlignment:
               CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Capture Health Information',
-              style: TextStyle(
+            Text(
+              l10n.captureHealthInformation,
+              style: const TextStyle(
                 fontSize: 23,
                 fontWeight:
                     FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Enter the information naturally. '
-              'AASHANet AI will analyze it '
-              'and structure the record.',
+            Text(
+              l10n.captureHealthDescription,
             ),
             const SizedBox(height: 25),
             SizedBox(
@@ -1273,8 +1301,8 @@ class _RecordScreenState
                     ),
                     Text(
                       _isRecording
-                          ? 'Tap to Stop Recording'
-                          : 'Tap to Record Voice',
+                          ? l10n.tapToStopRecording
+                          : l10n.tapToRecordVoice,
                       style:
                           const TextStyle(
                         fontSize: 16,
@@ -1287,8 +1315,8 @@ class _RecordScreenState
                       const SizedBox(
                         height: 4,
                       ),
-                      const Text(
-                        'Recording...',
+                      Text(
+                        l10n.recording,
                       ),
                     ],
                     if (!_isRecording &&
@@ -1297,8 +1325,8 @@ class _RecordScreenState
                       const SizedBox(
                         height: 4,
                       ),
-                      const Text(
-                        'Recording saved',
+                     Text(
+                        l10n.recordingSaved,
                       ),
                     ],
                   ],
@@ -1306,8 +1334,8 @@ class _RecordScreenState
               ),
             ),
             const SizedBox(height: 20),
-            const Center(
-              child: Text('OR'),
+            Center(
+              child: Text(l10n.orText),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -1317,10 +1345,9 @@ class _RecordScreenState
               decoration:
                   InputDecoration(
                 labelText:
-                    'Enter record by typing',
+                    l10n.enterRecordByTyping,
                 hintText:
-                    'Example: Ramesh is 42 years old '
-                    'and has cough and fever for three days',
+                    l10n.recordExampleHint,
                 alignLabelWithHint: true,
                 prefixIcon:
                     const Padding(
@@ -1364,8 +1391,8 @@ class _RecordScreenState
                       ),
                 label: Text(
                   isProcessing
-                      ? 'Analyzing Record...'
-                      : 'Process Record',
+                      ? l10n.analyzingRecord
+                      : 	l10n.processRecord,
                   style:
                       const TextStyle(
                     fontSize: 17,
@@ -1392,11 +1419,19 @@ class ReviewRecordScreen
     super.key,
     required this.accessToken,
     required this.recordData,
+    required this.localRecordId,
+    required this.localRepository,
   });
 
   final String accessToken;
   final Map<String, dynamic>
       recordData;
+
+  // Local SQLite id of this record, so its sync status can be
+  // updated once the server confirms (or rejects) it.
+  final String localRecordId;
+  final HealthRecordLocalRepository
+      localRepository;
 
   @override
   State<ReviewRecordScreen>
@@ -1404,8 +1439,11 @@ class ReviewRecordScreen
           _ReviewRecordScreenState();
 }
 
-class _ReviewRecordScreenState
+
+  class _ReviewRecordScreenState
     extends State<ReviewRecordScreen> {
+  AppLocalizations get l10n =>
+      AppLocalizations.of(context)!;
   late TextEditingController
       patientNameController;
 
@@ -1475,6 +1513,28 @@ class _ReviewRecordScreenState
     durationController.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _updateLocalSyncStatus({
+    required bool synced,
+  }) async {
+    try {
+      if (synced) {
+        await widget.localRepository
+            .markAsSynced(
+          widget.localRecordId,
+        );
+      } else {
+        await widget.localRepository
+            .markAsFailed(
+          widget.localRecordId,
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        'LOCAL SYNC STATUS UPDATE ERROR: $e',
+      );
+    }
   }
 
   Future<void> confirmRecord() async {
@@ -1600,6 +1660,10 @@ class _ReviewRecordScreenState
         );
       }
 
+      await _updateLocalSyncStatus(
+        synced: true,
+      );
+
       if (!mounted) {
         return;
       }
@@ -1656,6 +1720,10 @@ class _ReviewRecordScreenState
         'CONFIRM RECORD ERROR: $e',
       );
 
+      await _updateLocalSyncStatus(
+        synced: false,
+      );
+
       if (!mounted) {
         return;
       }
@@ -1700,8 +1768,8 @@ class _ReviewRecordScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Review AI Analysis',
+        title: Text(
+          l10n.reviewExtractedInformation,
         ),
       ),
       body: SingleChildScrollView(
@@ -1923,6 +1991,8 @@ class LocalRecordsScreen
 
 class _LocalRecordsScreenState
     extends State<LocalRecordsScreen> {
+  AppLocalizations get l10n =>
+    AppLocalizations.of(context)!;
   final AppDatabase _database =
       AppDatabase();
 
@@ -1949,9 +2019,7 @@ class _LocalRecordsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Local Health Records',
-        ),
+        title: Text(l10n.localHealthRecords),
       ),
       body: FutureBuilder(
         future:
@@ -1969,7 +2037,7 @@ class _LocalRecordsScreenState
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Could not load records:\n'
+                '${l10n.couldNotLoadRecords}:\n'
                 '${snapshot.error}',
                 textAlign:
                     TextAlign.center,
@@ -1981,9 +2049,9 @@ class _LocalRecordsScreenState
               snapshot.data ?? [];
 
           if (records.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'No local health records yet.',
+                l10n.noLocalHealthRecords,
               ),
             );
           }
@@ -2018,9 +2086,9 @@ class _LocalRecordsScreenState
                         TextOverflow.ellipsis,
                   ),
                   subtitle: Text(
-                    'Worker: '
-                    '${record.workerId ?? 'Not assigned yet'}\n'
-                    'Status: '
+                    '${l10n.workerLabel}: '
+                    '${record.workerId ?? l10n.notAssignedYet}\n'
+                    '${l10n.statusLabel}: '
                     '${record.syncStatus}',
                   ),
                   isThreeLine: true,

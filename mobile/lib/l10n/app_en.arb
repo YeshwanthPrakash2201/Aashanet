@@ -37,5 +37,19 @@
   "recordingStarted": "Recording started",
   "enterRecordByTyping": "Enter record by typing",
   "processRecord": "Process Record",
-  "analyzingRecord": "Analyzing record..."
+  "analyzingRecord": "Analyzing record...",
+  "orText": "OR",
+  "recordExampleHint": "Example: Ramesh is 42 years old and has cough and fever for three days",
+  "microphonePermissionRequired": "Microphone permission is required",
+  "couldNotRecordVoice": "Could not record voice",
+  "couldNotSaveRecordLocally": "Could not save record locally",
+  "pleaseEnterOrRecordHealthInfo": "Please enter or record the health information",
+  "recordSavedLocallyOffline": "Record saved on this device, but it could not be sent to the server. Please try again later.",
+  "reviewExtractedInformation": "Review Extracted Information",
+  "localHealthRecords": "Local Health Records",
+  "couldNotLoadRecords": "Could not load records",
+  "noLocalHealthRecords": "No local health records yet.",
+  "workerLabel": "Worker",
+  "notAssignedYet": "Not assigned yet",
+  "statusLabel": "Status"
 }

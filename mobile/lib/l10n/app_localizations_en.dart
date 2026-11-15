@@ -67,6 +67,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueText => 'Continue';
 
   @override
+  String get usernameHint => 'Enter your username';
+
+  @override
+  String get passwordHint => 'Enter your password';
+
+  @override
+  String get loginSubtitle => 'AI-Powered Voice-Based Health Assistant';
+
+  @override
+  String get loginSupportText => 'Supporting ASHA workers in rural healthcare';
+
+  @override
+  String get enterUsernamePassword => 'Please enter username and password';
+
+  @override
+  String get loginFailed => 'Login failed';
+
+  @override
+  String get couldNotConnectServer => 'Could not connect to server';
+
+  @override
   String get recordHealthVisit => 'Record Health Visit';
 
   @override
@@ -74,13 +95,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get captureHealthDescription =>
-      'Enter the information naturally. AASHANet AI will analyze it and structure the record.';
+      'Enter health information naturally. AASHANet AI will analyze it and create a health record.';
 
   @override
-  String get tapToRecordVoice => 'Tap to Record Voice';
+  String get tapToRecordVoice => 'Tap to record voice';
 
   @override
-  String get tapToStopRecording => 'Tap to Stop Recording';
+  String get tapToStopRecording => 'Tap to stop recording';
 
   @override
   String get recording => 'Recording...';
@@ -98,5 +119,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get processRecord => 'Process Record';
 
   @override
-  String get analyzingRecord => 'Analyzing Record...';
+  String get analyzingRecord => 'Analyzing record...';
+
+  @override
+  String get orText => 'OR';
+
+  @override
+  String get recordExampleHint =>
+      'Example: Ramesh is 42 years old and has cough and fever for three days';
+
+  @override
+  String get microphonePermissionRequired =>
+      'Microphone permission is required';
+
+  @override
+  String get couldNotRecordVoice => 'Could not record voice';
+
+  @override
+  String get couldNotSaveRecordLocally => 'Could not save record locally';
+
+  @override
+  String get pleaseEnterOrRecordHealthInfo =>
+      'Please enter or record the health information';
+
+  @override
+  String get recordSavedLocallyOffline =>
+      'Record saved on this device, but it could not be sent to the server. Please try again later.';
+
+  @override
+  String get reviewExtractedInformation => 'Review Extracted Information';
+
+  @override
+  String get localHealthRecords => 'Local Health Records';
+
+  @override
+  String get couldNotLoadRecords => 'Could not load records';
+
+  @override
+  String get noLocalHealthRecords => 'No local health records yet.';
+
+  @override
+  String get workerLabel => 'Worker';
+
+  @override
+  String get notAssignedYet => 'Not assigned yet';
+
+  @override
+  String get statusLabel => 'Status';
 }

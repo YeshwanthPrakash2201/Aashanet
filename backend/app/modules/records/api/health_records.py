@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 
 from fastapi import (
     APIRouter,
@@ -16,12 +18,42 @@ from app.infrastructure.db_dependency import get_db
 from app.modules.auth.infrastructure.user_repository import UserRepository
 from app.modules.records.application.health_record_service import HealthRecordService
 from app.modules.ai.application.health_record_ai_service import HealthRecordAIService
+from app.services.gemini_service import (
+    AUDIO_MIME_TYPES,
+    GeminiConfigurationError,
+    GeminiProcessingError,
+    GeminiUnavailableError,
+    UnsupportedLanguageError,
+    normalize_language,
+    process_audio,
+)
 
 from app.schemas.health_record import (
     HealthRecordCreate,
     HealthRecordConfirm,
     HealthRecordResponse
 )
+
+
+# Upper bound for uploaded voice notes (a few minutes of AAC is ~1-3 MB).
+MAX_AUDIO_BYTES = 25 * 1024 * 1024
+
+
+def _mark_ai_failed(db: Connection, record_id: str) -> None:
+    """Record that AI processing failed, without touching any data the
+    worker has entered. The record stays a draft and can be retried."""
+    with db.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE health_records
+            SET ai_status = 'failed',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+            """,
+            (record_id,)
+        )
+
+    db.commit()
 
 
 router = APIRouter(
@@ -169,10 +201,14 @@ def process_health_record(
 
 # ============================================================
 # PROCESS AUDIO HEALTH RECORD USING GEMINI
+#
+# Deliberately a plain `def`: the database and Gemini calls below are
+# blocking, so FastAPI must run this in its threadpool rather than on
+# the event loop (an `async def` here would stall every other request).
 # ============================================================
 
 @router.post("/{record_id}/process-audio")
-async def process_health_record_audio(
+def process_health_record_audio(
     record_id: str,
     audio: UploadFile = File(...),
     language: str = Form("Kannada"),
@@ -220,7 +256,19 @@ async def process_health_record_audio(
             detail="You cannot process this record"
         )
 
-    audio_bytes = await audio.read()
+    if record[4] == "confirmed":
+        raise HTTPException(
+            status_code=409,
+            detail="Health record is already confirmed"
+        )
+
+    audio_bytes = audio.file.read(MAX_AUDIO_BYTES + 1)
+
+    if len(audio_bytes) > MAX_AUDIO_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Audio file is too large"
+        )
 
     if not audio_bytes:
         raise HTTPException(
@@ -228,12 +276,24 @@ async def process_health_record_audio(
             detail="Audio file is empty"
         )
 
-    import tempfile
-    import os
+    # Validate inputs before spending a Gemini call on them.
+    try:
+        language = normalize_language(language)
+    except UnsupportedLanguageError:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported language. Use Kannada, Hindi or English."
+        )
 
     suffix = os.path.splitext(
         audio.filename or ".m4a"
-    )[1]
+    )[1].lower() or ".m4a"
+
+    if suffix not in AUDIO_MIME_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported audio format"
+        )
 
     with tempfile.NamedTemporaryFile(
         delete=False,
@@ -243,86 +303,42 @@ async def process_health_record_audio(
         temp_audio_path = temp_audio.name
 
     try:
-        from app.services.gemini_service import process_audio
-
-        result = process_audio(
+        # This endpoint is a plain `def`, so it already runs in
+        # FastAPI's threadpool; the blocking call is safe here.
+        analysis = process_audio(
             temp_audio_path,
             language=language
+        )
+
+    except GeminiUnavailableError:
+        _mark_ai_failed(db, record_id)
+        raise HTTPException(
+            status_code=503,
+            detail="The AI service is busy right now. "
+                   "Your record is saved; please try processing it again in a few minutes."
+        )
+
+    except GeminiConfigurationError:
+        raise HTTPException(
+            status_code=500,
+            detail="The AI service is not configured on the server."
+        )
+
+    except GeminiProcessingError:
+        _mark_ai_failed(db, record_id)
+        raise HTTPException(
+            status_code=502,
+            detail="The AI service could not process this audio. "
+                   "Please record again or type the details."
         )
 
     finally:
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
-    transcript = ""
-    english = ""
-    analyzed = {}
-
-    if "ENGLISH:" in result:
-
-        transcript_part, remaining = result.split(
-            "ENGLISH:",
-            1
-        )
-
-        transcript = transcript_part.replace(
-            "TRANSCRIPT:",
-            ""
-        ).strip()
-
-        if "ANALYZED:" in remaining:
-
-            english_part, analyzed_part = remaining.split(
-                "ANALYZED:",
-                1
-            )
-
-            english = english_part.strip()
-
-            for line in analyzed_part.strip().splitlines():
-
-                if ":" not in line:
-                    continue
-
-                key, value = line.split(
-                    ":",
-                    1
-                )
-
-                key = key.strip().lower().replace(
-                    " ",
-                    "_"
-                )
-
-                value = value.strip()
-
-                if key == "patient_name":
-
-                    analyzed["patient_name"] = (
-                        value or None
-                    )
-
-                elif key == "age":
-
-                    try:
-                        analyzed["age"] = int(value)
-
-                    except ValueError:
-                        analyzed["age"] = None
-
-                elif key == "symptoms":
-
-                    analyzed["symptoms"] = [
-                        symptom.strip()
-                        for symptom in value.split(",")
-                        if symptom.strip()
-                    ]
-
-                elif key == "duration":
-
-                    analyzed["duration"] = (
-                        value or None
-                    )
+    transcript = analysis.transcript
+    english = analysis.english_translation
+    analyzed = analysis.suggested_data()
 
     with db.cursor() as cursor:
         cursor.execute(

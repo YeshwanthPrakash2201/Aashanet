@@ -116,7 +116,10 @@ class AppDatabase extends _$AppDatabase {
             );
           }
 
-          if (from < 3) {
+          // alterTable above rebuilds the table from the current
+          // schema, which already includes serverRecordId. Only
+          // databases that started at v2 still need the column.
+          if (from == 2) {
             await m.addColumn(
               healthRecords,
               healthRecords.serverRecordId,
@@ -129,10 +132,24 @@ class AppDatabase extends _$AppDatabase {
   // GET ALL HEALTH RECORDS
   // ==========================================================
 
-  Future<List<HealthRecord>>
-      getAllHealthRecords() {
-    return select(
-      healthRecords,
+    // ==========================================================
+  // GET ALL HEALTH RECORDS
+  // ==========================================================
+
+  Future<List<HealthRecord>> getAllHealthRecords() {
+    return select(healthRecords).get();
+  }
+
+  // ==========================================================
+  // GET PENDING HEALTH RECORDS
+  // ==========================================================
+
+  Future<List<HealthRecord>> getPendingHealthRecords() {
+    return (
+      select(healthRecords)
+        ..where(
+          (table) => table.syncStatus.equals('pending'),
+        )
     ).get();
   }
 

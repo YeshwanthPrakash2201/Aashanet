@@ -1,4 +1,4 @@
-﻿{
+{
   "appName": "AASHANet AI",
   "loginTitle": "ಲಾಗಿನ್",
   "username": "ಬಳಕೆದಾರ ಹೆಸರು",
@@ -35,5 +35,19 @@
   "recordingStarted": "ದಾಖಲೆ ಪ್ರಾರಂಭವಾಗಿದೆ",
   "enterRecordByTyping": "ಟೈಪ್ ಮಾಡುವ ಮೂಲಕ ದಾಖಲೆ ನಮೂದಿಸಿ",
   "processRecord": "ದಾಖಲೆಯನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಿ",
-  "analyzingRecord": "ದಾಖಲೆಯನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ..."
+  "analyzingRecord": "ದಾಖಲೆಯನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...",
+  "orText": "ಅಥವಾ",
+  "recordExampleHint": "ಉದಾಹರಣೆ: ರಮೇಶ್ ಅವರಿಗೆ 42 ವರ್ಷ ವಯಸ್ಸಾಗಿದೆ. ಅವರಿಗೆ ಮೂರು ದಿನಗಳಿಂದ ಕೆಮ್ಮು ಮತ್ತು ಜ್ವರವಿದೆ",
+  "microphonePermissionRequired": "ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ಅಗತ್ಯವಿದೆ",
+  "couldNotRecordVoice": "ಧ್ವನಿಯನ್ನು ದಾಖಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
+  "couldNotSaveRecordLocally": "ದಾಖಲೆಯನ್ನು ಸ್ಥಳೀಯವಾಗಿ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
+  "pleaseEnterOrRecordHealthInfo": "ದಯವಿಟ್ಟು ಆರೋಗ್ಯ ಮಾಹಿತಿಯನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಧ್ವನಿಯಾಗಿ ದಾಖಲಿಸಿ",
+  "recordSavedLocallyOffline": "ದಾಖಲೆಯನ್ನು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ, ಆದರೆ ಸರ್ವರ್‌ಗೆ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "reviewExtractedInformation": "ಹೊರತೆಗೆದ ಮಾಹಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ",
+  "localHealthRecords": "ಸ್ಥಳೀಯ ಆರೋಗ್ಯ ದಾಖಲೆಗಳು",
+  "couldNotLoadRecords": "ದಾಖಲೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
+  "noLocalHealthRecords": "ಇನ್ನೂ ಸ್ಥಳೀಯ ಆರೋಗ್ಯ ದಾಖಲೆಗಳಿಲ್ಲ.",
+  "workerLabel": "ಕಾರ್ಯಕರ್ತೆ",
+  "notAssignedYet": "ಇನ್ನೂ ನಿಯೋಜಿಸಲಾಗಿಲ್ಲ",
+  "statusLabel": "ಸ್ಥಿತಿ"
 }

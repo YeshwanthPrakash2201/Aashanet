@@ -67,6 +67,29 @@ class AppLocalizationsKn extends AppLocalizations {
   String get continueText => 'ಮುಂದುವರಿಸಿ';
 
   @override
+  String get usernameHint => 'ನಿಮ್ಮ ಬಳಕೆದಾರ ಹೆಸರನ್ನು ನಮೂದಿಸಿ';
+
+  @override
+  String get passwordHint => 'ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ';
+
+  @override
+  String get loginSubtitle => 'AI ಆಧಾರಿತ ಧ್ವನಿ ಆಧಾರಿತ ಆರೋಗ್ಯ ಸಹಾಯಕ';
+
+  @override
+  String get loginSupportText =>
+      'ಗ್ರಾಮೀಣ ಆರೋಗ್ಯ ಸೇವೆಯಲ್ಲಿ ಆಶಾ ಕಾರ್ಯಕರ್ತರಿಗೆ ಬೆಂಬಲ';
+
+  @override
+  String get enterUsernamePassword =>
+      'ದಯವಿಟ್ಟು ಬಳಕೆದಾರ ಹೆಸರು ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ';
+
+  @override
+  String get loginFailed => 'ಲಾಗಿನ್ ವಿಫಲವಾಗಿದೆ';
+
+  @override
+  String get couldNotConnectServer => 'ಸರ್ವರ್‌ಗೆ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ';
+
+  @override
   String get recordHealthVisit => 'ಆರೋಗ್ಯ ಭೇಟಿಯನ್ನು ದಾಖಲಿಸಿ';
 
   @override
@@ -99,4 +122,50 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get analyzingRecord => 'ದಾಖಲೆಯನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...';
+
+  @override
+  String get orText => 'ಅಥವಾ';
+
+  @override
+  String get recordExampleHint =>
+      'ಉದಾಹರಣೆ: ರಮೇಶ್ ಅವರಿಗೆ 42 ವರ್ಷ ವಯಸ್ಸಾಗಿದೆ. ಅವರಿಗೆ ಮೂರು ದಿನಗಳಿಂದ ಕೆಮ್ಮು ಮತ್ತು ಜ್ವರವಿದೆ';
+
+  @override
+  String get microphonePermissionRequired => 'ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ಅಗತ್ಯವಿದೆ';
+
+  @override
+  String get couldNotRecordVoice => 'ಧ್ವನಿಯನ್ನು ದಾಖಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ';
+
+  @override
+  String get couldNotSaveRecordLocally =>
+      'ದಾಖಲೆಯನ್ನು ಸ್ಥಳೀಯವಾಗಿ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ';
+
+  @override
+  String get pleaseEnterOrRecordHealthInfo =>
+      'ದಯವಿಟ್ಟು ಆರೋಗ್ಯ ಮಾಹಿತಿಯನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಧ್ವನಿಯಾಗಿ ದಾಖಲಿಸಿ';
+
+  @override
+  String get recordSavedLocallyOffline =>
+      'ದಾಖಲೆಯನ್ನು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ, ಆದರೆ ಸರ್ವರ್‌ಗೆ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get reviewExtractedInformation => 'ಹೊರತೆಗೆದ ಮಾಹಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ';
+
+  @override
+  String get localHealthRecords => 'ಸ್ಥಳೀಯ ಆರೋಗ್ಯ ದಾಖಲೆಗಳು';
+
+  @override
+  String get couldNotLoadRecords => 'ದಾಖಲೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ';
+
+  @override
+  String get noLocalHealthRecords => 'ಇನ್ನೂ ಸ್ಥಳೀಯ ಆರೋಗ್ಯ ದಾಖಲೆಗಳಿಲ್ಲ.';
+
+  @override
+  String get workerLabel => 'ಕಾರ್ಯಕರ್ತೆ';
+
+  @override
+  String get notAssignedYet => 'ಇನ್ನೂ ನಿಯೋಜಿಸಲಾಗಿಲ್ಲ';
+
+  @override
+  String get statusLabel => 'ಸ್ಥಿತಿ';
 }

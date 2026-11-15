@@ -31,6 +31,10 @@ class HealthRecordLocalRepository {
     return database.getAllHealthRecords();
   }
 
+  Future<List<HealthRecord>> getPendingRecords() {
+    return database.getPendingHealthRecords();
+  }
+
   // ==========================================================
   // LINK LOCAL RECORD TO SERVER RECORD
   // ==========================================================

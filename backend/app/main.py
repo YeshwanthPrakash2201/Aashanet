@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from psycopg import Connection
+from psycopg.errors import UniqueViolation
 
 from app.core.auth import get_current_user
-from app.core.security import create_access_token
+from app.core.security import create_access_token, decode_access_token
 
 from app.infrastructure.db_dependency import get_db
 from app.modules.records.api.health_records import router as health_records_router
@@ -14,6 +16,13 @@ from app.schemas.user import (
     LoginRequest,
     LoginResponse
 )
+
+
+ADMIN_ROLE = "admin"
+
+# auto_error=False so the very first (bootstrap) user can be created
+# without a token; every later request must carry an admin token.
+optional_bearer = HTTPBearer(auto_error=False)
 
 
 app = FastAPI(title="AASHANet AI API")
@@ -71,22 +80,55 @@ def users_count(
 
 # ============================================================
 # CREATE USER
+# Admin JWT required. The only exception is bootstrapping: when the
+# users table is empty, the first user may be created without a token
+# and must be an admin.
 # ============================================================
 
-@app.post("/users")
+@app.post("/users", status_code=status.HTTP_201_CREATED)
 def create_user(
     user: UserCreate,
-    db: Connection = Depends(get_db)
+    db: Connection = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer)
 ):
     repository = UserRepository(db)
     service = UserService(repository)
 
-    created_user = service.create_user(
-        username=user.username,
-        password=user.password,
-        role=user.role,
-        full_name=user.full_name
-    )
+    if credentials is not None:
+        current_user = decode_access_token(credentials)
+
+        if current_user.get("role") != ADMIN_ROLE:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only administrators can create users"
+            )
+
+    elif service.get_user_count() == 0:
+        if user.role != ADMIN_ROLE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The first user must be an admin"
+            )
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+
+    try:
+        created_user = service.create_user(
+            username=user.username,
+            password=user.password,
+            role=user.role,
+            full_name=user.full_name
+        )
+    except UniqueViolation:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username already exists"
+        )
 
     return {
         "id": str(created_user[0]),
@@ -144,6 +186,16 @@ def login(
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password"
+        )
+
+    # --------------------------------------------------------
+    # STEP 4b: Deactivated accounts cannot log in
+    # --------------------------------------------------------
+
+    if not existing_user[5]:
+        raise HTTPException(
+            status_code=403,
+            detail="Account is disabled"
         )
 
     # --------------------------------------------------------

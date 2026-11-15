@@ -13,90 +13,160 @@ class AppLocalizationsHi extends AppLocalizations {
   String get appName => 'AASHANet AI';
 
   @override
-  String get loginTitle => 'ಲಾಗಿನ್';
+  String get loginTitle => 'लॉगिन';
 
   @override
-  String get username => 'ಬಳಕೆದಾರ ಹೆಸರು';
+  String get username => 'उपयोगकर्ता नाम';
 
   @override
-  String get password => 'ಪಾಸ್‌ವರ್ಡ್';
+  String get password => 'पासवर्ड';
 
   @override
-  String get login => 'ಲಾಗಿನ್';
+  String get login => 'लॉगिन करें';
 
   @override
-  String get welcome => 'ಸ್ವಾಗತ';
+  String get welcome => 'स्वागत है';
 
   @override
-  String get role => 'ಪಾತ್ರ';
+  String get role => 'भूमिका';
 
   @override
-  String get record => 'ರೆಕಾರ್ಡ್';
+  String get record => 'रिकॉर्ड';
 
   @override
-  String get dataShowing => 'ದಾಖಲೆಗಳನ್ನು ವೀಕ್ಷಿಸಿ';
+  String get dataShowing => 'रिकॉर्ड देखें';
 
   @override
-  String get typingOption => 'ಟೈಪ್ ಮಾಡುವ ಆಯ್ಕೆ';
+  String get typingOption => 'टाइप करने का विकल्प';
 
   @override
-  String get tasks => 'ಕಾರ್ಯಗಳು';
+  String get tasks => 'कार्य';
 
   @override
-  String get logout => 'ಲಾಗ್ ಔಟ್';
+  String get logout => 'लॉगआउट';
 
   @override
-  String get settings => 'ಸೆಟ್ಟಿಂಗ್ಸ್';
+  String get settings => 'सेटिंग्स';
 
   @override
-  String get language => 'ಭಾಷೆ';
+  String get language => 'भाषा';
 
   @override
-  String get selectLanguage => 'ನಿಮ್ಮ ಡೀಫಾಲ್ಟ್ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ';
+  String get selectLanguage => 'अपनी डिफ़ॉल्ट भाषा चुनें';
 
   @override
-  String get english => 'ಇಂಗ್ಲಿಷ್';
+  String get english => 'अंग्रेज़ी';
 
   @override
-  String get kannada => 'ಕನ್ನಡ';
+  String get kannada => 'कन्नड़';
 
   @override
-  String get hindi => 'ಹಿಂದಿ';
+  String get hindi => 'हिंदी';
 
   @override
-  String get continueText => 'ಮುಂದುವರಿಸಿ';
+  String get continueText => 'जारी रखें';
 
   @override
-  String get recordHealthVisit => 'ಆರೋಗ್ಯ ಭೇಟಿಯನ್ನು ದಾಖಲಿಸಿ';
+  String get usernameHint => 'अपना उपयोगकर्ता नाम दर्ज करें';
 
   @override
-  String get captureHealthInformation => 'ಆರೋಗ್ಯ ಮಾಹಿತಿಯನ್ನು ದಾಖಲಿಸಿ';
+  String get passwordHint => 'अपना पासवर्ड दर्ज करें';
+
+  @override
+  String get loginSubtitle => 'AI आधारित आवाज़ से संचालित स्वास्थ्य सहायक';
+
+  @override
+  String get loginSupportText =>
+      'ग्रामीण स्वास्थ्य सेवाओं में आशा कार्यकर्ताओं की सहायता';
+
+  @override
+  String get enterUsernamePassword =>
+      'कृपया उपयोगकर्ता नाम और पासवर्ड दर्ज करें';
+
+  @override
+  String get loginFailed => 'लॉगिन विफल हुआ';
+
+  @override
+  String get couldNotConnectServer => 'सर्वर से कनेक्ट नहीं हो सका';
+
+  @override
+  String get recordHealthVisit => 'स्वास्थ्य भ्रमण दर्ज करें';
+
+  @override
+  String get captureHealthInformation => 'स्वास्थ्य जानकारी दर्ज करें';
 
   @override
   String get captureHealthDescription =>
-      'ಮಾಹಿತಿಯನ್ನು ಸಹಜವಾಗಿ ನಮೂದಿಸಿ. AASHANet AI ಅದನ್ನು ವಿಶ್ಲೇಷಿಸಿ ದಾಖಲೆಯಾಗಿ ರೂಪಿಸುತ್ತದೆ.';
+      'स्वास्थ्य संबंधी जानकारी सामान्य भाषा में दर्ज करें। AASHANet AI इसका विश्लेषण करके स्वास्थ्य रिकॉर्ड बनाएगा।';
 
   @override
-  String get tapToRecordVoice => 'ಧ್ವನಿ ದಾಖಲಿಸಲು ಒತ್ತಿರಿ';
+  String get tapToRecordVoice => 'आवाज़ रिकॉर्ड करने के लिए टैप करें';
 
   @override
-  String get tapToStopRecording => 'ದಾಖಲಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಲು ಒತ್ತಿರಿ';
+  String get tapToStopRecording => 'रिकॉर्डिंग रोकने के लिए टैप करें';
 
   @override
-  String get recording => 'ದಾಖಲಾಗುತ್ತಿದೆ...';
+  String get recording => 'रिकॉर्डिंग हो रही है...';
 
   @override
-  String get recordingSaved => 'ದಾಖಲೆ ಉಳಿಸಲಾಗಿದೆ';
+  String get recordingSaved => 'रिकॉर्डिंग सहेजी गई';
 
   @override
-  String get recordingStarted => 'ದಾಖಲೆ ಪ್ರಾರಂಭವಾಗಿದೆ';
+  String get recordingStarted => 'रिकॉर्डिंग शुरू हुई';
 
   @override
-  String get enterRecordByTyping => 'ಟೈಪ್ ಮಾಡುವ ಮೂಲಕ ದಾಖಲೆ ನಮೂದಿಸಿ';
+  String get enterRecordByTyping => 'टाइप करके रिकॉर्ड दर्ज करें';
 
   @override
-  String get processRecord => 'ದಾಖಲೆಯನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಿ';
+  String get processRecord => 'रिकॉर्ड संसाधित करें';
 
   @override
-  String get analyzingRecord => 'ದಾಖಲೆಯನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...';
+  String get analyzingRecord => 'रिकॉर्ड का विश्लेषण हो रहा है...';
+
+  @override
+  String get orText => 'या';
+
+  @override
+  String get recordExampleHint =>
+      'उदाहरण: रमेश की उम्र 42 वर्ष है और उन्हें तीन दिनों से खांसी और बुखार है';
+
+  @override
+  String get microphonePermissionRequired => 'माइक्रोफ़ोन की अनुमति आवश्यक है';
+
+  @override
+  String get couldNotRecordVoice => 'आवाज़ रिकॉर्ड नहीं हो सकी';
+
+  @override
+  String get couldNotSaveRecordLocally =>
+      'रिकॉर्ड स्थानीय रूप से सहेजा नहीं जा सका';
+
+  @override
+  String get pleaseEnterOrRecordHealthInfo =>
+      'कृपया स्वास्थ्य संबंधी जानकारी लिखें या आवाज़ में रिकॉर्ड करें';
+
+  @override
+  String get recordSavedLocallyOffline =>
+      'रिकॉर्ड इस डिवाइस पर सहेजा गया है, लेकिन सर्वर पर नहीं भेजा जा सका। कृपया बाद में पुनः प्रयास करें।';
+
+  @override
+  String get reviewExtractedInformation => 'निकाली गई जानकारी की समीक्षा करें';
+
+  @override
+  String get localHealthRecords => 'स्थानीय स्वास्थ्य रिकॉर्ड';
+
+  @override
+  String get couldNotLoadRecords => 'रिकॉर्ड लोड नहीं हो सके';
+
+  @override
+  String get noLocalHealthRecords =>
+      'अभी तक कोई स्थानीय स्वास्थ्य रिकॉर्ड नहीं है।';
+
+  @override
+  String get workerLabel => 'कार्यकर्ता';
+
+  @override
+  String get notAssignedYet => 'अभी तक आवंटित नहीं किया गया';
+
+  @override
+  String get statusLabel => 'स्थिति';
 }

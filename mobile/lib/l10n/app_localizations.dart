@@ -214,6 +214,48 @@ abstract class AppLocalizations {
   /// **'Continue'**
   String get continueText;
 
+  /// No description provided for @usernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username'**
+  String get usernameHint;
+
+  /// No description provided for @passwordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get passwordHint;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-Powered Voice-Based Health Assistant'**
+  String get loginSubtitle;
+
+  /// No description provided for @loginSupportText.
+  ///
+  /// In en, this message translates to:
+  /// **'Supporting ASHA workers in rural healthcare'**
+  String get loginSupportText;
+
+  /// No description provided for @enterUsernamePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter username and password'**
+  String get enterUsernamePassword;
+
+  /// No description provided for @loginFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Login failed'**
+  String get loginFailed;
+
+  /// No description provided for @couldNotConnectServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to server'**
+  String get couldNotConnectServer;
+
   /// No description provided for @recordHealthVisit.
   ///
   /// In en, this message translates to:
@@ -229,19 +271,19 @@ abstract class AppLocalizations {
   /// No description provided for @captureHealthDescription.
   ///
   /// In en, this message translates to:
-  /// **'Enter the information naturally. AASHANet AI will analyze it and structure the record.'**
+  /// **'Enter health information naturally. AASHANet AI will analyze it and create a health record.'**
   String get captureHealthDescription;
 
   /// No description provided for @tapToRecordVoice.
   ///
   /// In en, this message translates to:
-  /// **'Tap to Record Voice'**
+  /// **'Tap to record voice'**
   String get tapToRecordVoice;
 
   /// No description provided for @tapToStopRecording.
   ///
   /// In en, this message translates to:
-  /// **'Tap to Stop Recording'**
+  /// **'Tap to stop recording'**
   String get tapToStopRecording;
 
   /// No description provided for @recording.
@@ -277,8 +319,92 @@ abstract class AppLocalizations {
   /// No description provided for @analyzingRecord.
   ///
   /// In en, this message translates to:
-  /// **'Analyzing Record...'**
+  /// **'Analyzing record...'**
   String get analyzingRecord;
+
+  /// No description provided for @orText.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get orText;
+
+  /// No description provided for @recordExampleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: Ramesh is 42 years old and has cough and fever for three days'**
+  String get recordExampleHint;
+
+  /// No description provided for @microphonePermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is required'**
+  String get microphonePermissionRequired;
+
+  /// No description provided for @couldNotRecordVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not record voice'**
+  String get couldNotRecordVoice;
+
+  /// No description provided for @couldNotSaveRecordLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save record locally'**
+  String get couldNotSaveRecordLocally;
+
+  /// No description provided for @pleaseEnterOrRecordHealthInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter or record the health information'**
+  String get pleaseEnterOrRecordHealthInfo;
+
+  /// No description provided for @recordSavedLocallyOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Record saved on this device, but it could not be sent to the server. Please try again later.'**
+  String get recordSavedLocallyOffline;
+
+  /// No description provided for @reviewExtractedInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Extracted Information'**
+  String get reviewExtractedInformation;
+
+  /// No description provided for @localHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Health Records'**
+  String get localHealthRecords;
+
+  /// No description provided for @couldNotLoadRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load records'**
+  String get couldNotLoadRecords;
+
+  /// No description provided for @noLocalHealthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No local health records yet.'**
+  String get noLocalHealthRecords;
+
+  /// No description provided for @workerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Worker'**
+  String get workerLabel;
+
+  /// No description provided for @notAssignedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not assigned yet'**
+  String get notAssignedYet;
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get statusLabel;
 }
 
 class _AppLocalizationsDelegate
