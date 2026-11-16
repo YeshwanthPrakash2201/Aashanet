@@ -291,6 +291,7 @@ class HealthRecordLocalRepository {
         conflictLocalData: Value(record.confirmedData),
         confirmedData: Value(record.conflictServerData),
         conflictServerData: const Value(null),
+        recordStatus: const Value(RecordStatus.confirmed),
         syncStatus: const Value(SyncStatus.synced),
         lastSyncError: const Value(null),
       ),
