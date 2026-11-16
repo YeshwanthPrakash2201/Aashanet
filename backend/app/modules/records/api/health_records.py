@@ -1,15 +1,17 @@
-import json
 import os
 import tempfile
+from uuid import UUID
 
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Response,
     UploadFile,
     File,
     Form
 )
+from fastapi.encoders import jsonable_encoder
 from psycopg import Connection
 
 from app.core.auth import get_current_user
@@ -17,6 +19,10 @@ from app.infrastructure.db_dependency import get_db
 
 from app.modules.auth.infrastructure.user_repository import UserRepository
 from app.modules.records.application.health_record_service import HealthRecordService
+from app.modules.records.infrastructure.health_record_repository import (
+    ConfirmConflict,
+    HealthRecordRepository,
+)
 from app.modules.ai.application.health_record_ai_service import HealthRecordAIService
 from app.services.gemini_service import (
     AUDIO_MIME_TYPES,
@@ -39,23 +45,6 @@ from app.schemas.health_record import (
 MAX_AUDIO_BYTES = 25 * 1024 * 1024
 
 
-def _mark_ai_failed(db: Connection, record_id: str) -> None:
-    """Record that AI processing failed, without touching any data the
-    worker has entered. The record stays a draft and can be retried."""
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            UPDATE health_records
-            SET ai_status = 'failed',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-            """,
-            (record_id,)
-        )
-
-    db.commit()
-
-
 router = APIRouter(
     prefix="/health-records",
     tags=["Health Records"]
@@ -63,7 +52,82 @@ router = APIRouter(
 
 
 # ============================================================
+# HELPERS
+# ============================================================
+
+def _current_worker(db: Connection, current_user: dict):
+    worker = UserRepository(db).get_user_by_username(current_user["sub"])
+
+    if not worker:
+        raise HTTPException(status_code=404, detail="Worker not found")
+
+    return worker
+
+
+def _owned_record(
+    repository: HealthRecordRepository,
+    record_id: UUID,
+    worker,
+    action: str,
+) -> dict:
+    record = repository.get(record_id)
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Health record not found")
+
+    if str(record["worker_id"]) != str(worker[0]):
+        raise HTTPException(
+            status_code=403,
+            detail=f"You cannot {action} this record"
+        )
+
+    return record
+
+
+def _reject_if_confirmed(record: dict) -> None:
+    if record["record_status"] == "confirmed":
+        raise HTTPException(
+            status_code=409,
+            detail="Health record is already confirmed"
+        )
+
+
+def _base(record: dict) -> dict:
+    return {
+        "id": str(record["id"]),
+        "worker_id": str(record["worker_id"]),
+        "client_record_id": (
+            str(record["client_record_id"])
+            if record["client_record_id"] else None
+        ),
+        "ai_status": record["ai_status"],
+        "record_status": record["record_status"],
+        "version": record["version"],
+    }
+
+
+def full_record(record: dict) -> dict:
+    """Everything the phone needs to resume or check a record."""
+    return {
+        **_base(record),
+        "raw_input": record["raw_input"],
+        "input_language": record["input_language"],
+        "transcript": record["ai_transcript"],
+        "english": record["ai_translated_text"],
+        "ai_suggested_data": record["ai_suggested_data"],
+        "confirmed_data": record["confirmed_data"],
+        "created_at": jsonable_encoder(record["created_at"]),
+        "updated_at": jsonable_encoder(record["updated_at"]),
+    }
+
+
+# ============================================================
 # CREATE HEALTH RECORD
+#
+# Idempotent when `client_record_id` is sent: a retry returns the record
+# created the first time (HTTP 200) instead of a duplicate. A brand-new
+# record is also returned with 200, as before, so existing app versions
+# keep working; the `X-Record-Created` header tells the two apart.
 # ============================================================
 
 @router.post(
@@ -72,31 +136,44 @@ router = APIRouter(
 )
 def create_health_record(
     record: HealthRecordCreate,
+    response: Response,
     db: Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    repository = UserRepository(db)
+    worker = _current_worker(db, current_user)
+    service = HealthRecordService(HealthRecordRepository(db))
 
-    service = HealthRecordService(repository)
-
-    worker = repository.get_user_by_username(
-        current_user["sub"]
-    )
-
-    created_record = service.create_health_record(
+    created_record, created = service.create_health_record(
         worker_id=worker[0],
         raw_input=record.raw_input,
-        input_language=record.input_language
+        input_language=record.input_language,
+        client_record_id=record.client_record_id,
     )
 
+    response.headers["X-Record-Created"] = "true" if created else "false"
+
     return {
-        "id": str(created_record[0]),
-        "worker_id": str(created_record[1]),
-        "raw_input": created_record[2],
-        "input_language": created_record[3],
-        "ai_status": created_record[4],
-        "record_status": created_record[5]
+        **_base(created_record),
+        "raw_input": created_record["raw_input"],
+        "input_language": created_record["input_language"],
     }
+
+
+# ============================================================
+# GET ONE HEALTH RECORD
+# Lets the phone check the server copy before retrying or confirming.
+# ============================================================
+
+@router.get("/{record_id}")
+def get_health_record(
+    record_id: UUID,
+    db: Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    worker = _current_worker(db, current_user)
+    record = _owned_record(HealthRecordRepository(db), record_id, worker, "view")
+
+    return full_record(record)
 
 
 # ============================================================
@@ -105,97 +182,23 @@ def create_health_record(
 
 @router.post("/{record_id}/process")
 def process_health_record(
-    record_id: str,
+    record_id: UUID,
     db: Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    repository = UserRepository(db)
-    ai_service = HealthRecordAIService()
+    worker = _current_worker(db, current_user)
+    repository = HealthRecordRepository(db)
+    record = _owned_record(repository, record_id, worker, "process")
+    _reject_if_confirmed(record)
 
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT
-                id,
-                worker_id,
-                raw_input,
-                input_language,
-                ai_status,
-                record_status
-            FROM health_records
-            WHERE id = %s
-            """,
-            (record_id,)
-        )
-
-        record = cursor.fetchone()
-
-    if not record:
-        raise HTTPException(
-            status_code=404,
-            detail="Health record not found"
-        )
-
-    worker = repository.get_user_by_username(
-        current_user["sub"]
-    )
-
-    if not worker:
-        raise HTTPException(
-            status_code=404,
-            detail="Worker not found"
-        )
-
-    if str(record[1]) != str(worker[0]):
-        raise HTTPException(
-            status_code=403,
-            detail="You cannot process this record"
-        )
-
-    suggested_data = ai_service.process(
-        record[2]
-    )
-
-    suggested_data_json = json.dumps(
-        suggested_data
-    )
-
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            UPDATE health_records
-            SET
-                ai_suggested_data = %s,
-                ai_status = 'pending_review',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-            RETURNING
-                id,
-                worker_id,
-                raw_input,
-                input_language,
-                ai_suggested_data,
-                ai_status,
-                record_status
-            """,
-            (
-                suggested_data_json,
-                record_id
-            )
-        )
-
-        updated_record = cursor.fetchone()
-
-    db.commit()
+    suggested_data = HealthRecordAIService().process(record["raw_input"])
+    updated = repository.save_ai_result(record_id, suggested_data)
 
     return {
-        "id": str(updated_record[0]),
-        "worker_id": str(updated_record[1]),
-        "raw_input": updated_record[2],
-        "input_language": updated_record[3],
-        "ai_suggested_data": updated_record[4],
-        "ai_status": updated_record[5],
-        "record_status": updated_record[6]
+        **_base(updated),
+        "raw_input": updated["raw_input"],
+        "input_language": updated["input_language"],
+        "ai_suggested_data": updated["ai_suggested_data"],
     }
 
 
@@ -209,58 +212,16 @@ def process_health_record(
 
 @router.post("/{record_id}/process-audio")
 def process_health_record_audio(
-    record_id: str,
+    record_id: UUID,
     audio: UploadFile = File(...),
     language: str = Form("Kannada"),
     db: Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    repository = UserRepository(db)
-
-    worker = repository.get_user_by_username(
-        current_user["sub"]
-    )
-
-    if not worker:
-        raise HTTPException(
-            status_code=404,
-            detail="Worker not found"
-        )
-
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT
-                id,
-                worker_id,
-                raw_input,
-                input_language,
-                record_status
-            FROM health_records
-            WHERE id = %s
-            """,
-            (record_id,)
-        )
-
-        record = cursor.fetchone()
-
-    if not record:
-        raise HTTPException(
-            status_code=404,
-            detail="Health record not found"
-        )
-
-    if str(record[1]) != str(worker[0]):
-        raise HTTPException(
-            status_code=403,
-            detail="You cannot process this record"
-        )
-
-    if record[4] == "confirmed":
-        raise HTTPException(
-            status_code=409,
-            detail="Health record is already confirmed"
-        )
+    worker = _current_worker(db, current_user)
+    repository = HealthRecordRepository(db)
+    record = _owned_record(repository, record_id, worker, "process")
+    _reject_if_confirmed(record)
 
     audio_bytes = audio.file.read(MAX_AUDIO_BYTES + 1)
 
@@ -311,7 +272,7 @@ def process_health_record_audio(
         )
 
     except GeminiUnavailableError:
-        _mark_ai_failed(db, record_id)
+        repository.mark_ai_failed(record_id)
         raise HTTPException(
             status_code=503,
             detail="The AI service is busy right now. "
@@ -325,7 +286,7 @@ def process_health_record_audio(
         )
 
     except GeminiProcessingError:
-        _mark_ai_failed(db, record_id)
+        repository.mark_ai_failed(record_id)
         raise HTTPException(
             status_code=502,
             detail="The AI service could not process this audio. "
@@ -336,109 +297,39 @@ def process_health_record_audio(
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
-    transcript = analysis.transcript
-    english = analysis.english_translation
-    analyzed = analysis.suggested_data()
-
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            UPDATE health_records
-            SET
-                ai_transcript = %s,
-                ai_translated_text = %s,
-                ai_suggested_data = %s,
-                ai_status = 'pending_review',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-            RETURNING
-                id,
-                worker_id,
-                ai_transcript,
-                ai_translated_text,
-                ai_suggested_data,
-                ai_status,
-                record_status
-            """,
-            (
-                transcript,
-                english,
-                json.dumps(analyzed),
-                record_id
-            )
-        )
-
-        updated_record = cursor.fetchone()
-
-    db.commit()
+    updated = repository.save_ai_result(
+        record_id,
+        analysis.suggested_data(),
+        transcript=analysis.transcript,
+        translated_text=analysis.english_translation,
+    )
 
     return {
-        "id": str(updated_record[0]),
-        "worker_id": str(updated_record[1]),
-        "transcript": updated_record[2],
-        "english": updated_record[3],
-        "analyzed": updated_record[4],
-        "ai_status": updated_record[5],
-        "record_status": updated_record[6]
+        **_base(updated),
+        "transcript": updated["ai_transcript"],
+        "english": updated["ai_translated_text"],
+        "analyzed": updated["ai_suggested_data"],
     }
 
 
 # ============================================================
 # CONFIRM HEALTH RECORD
+#
+# Safe to retry: confirming again with the same data returns 200.
+# Confirming an already-confirmed record with *different* data returns
+# 409 with the server copy, so neither version is silently overwritten.
 # ============================================================
 
 @router.post("/{record_id}/confirm")
 def confirm_health_record(
-    record_id: str,
+    record_id: UUID,
     confirmed_record: HealthRecordConfirm,
     db: Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    repository = UserRepository(db)
-
-    worker = repository.get_user_by_username(
-        current_user["sub"]
-    )
-
-    if not worker:
-        raise HTTPException(
-            status_code=404,
-            detail="Worker not found"
-        )
-
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT
-                id,
-                worker_id,
-                ai_status,
-                record_status
-            FROM health_records
-            WHERE id = %s
-            """,
-            (record_id,)
-        )
-
-        record = cursor.fetchone()
-
-    if not record:
-        raise HTTPException(
-            status_code=404,
-            detail="Health record not found"
-        )
-
-    if str(record[1]) != str(worker[0]):
-        raise HTTPException(
-            status_code=403,
-            detail="You cannot confirm this record"
-        )
-
-    if record[3] == "confirmed":
-        raise HTTPException(
-            status_code=400,
-            detail="Health record is already confirmed"
-        )
+    worker = _current_worker(db, current_user)
+    repository = HealthRecordRepository(db)
+    _owned_record(repository, record_id, worker, "confirm")
 
     confirmed_data = {
         "patient_name": confirmed_record.patient_name,
@@ -447,47 +338,22 @@ def confirm_health_record(
         "duration": confirmed_record.duration
     }
 
-    confirmed_data_json = json.dumps(
-        confirmed_data
-    )
+    try:
+        updated, _changed = repository.confirm(record_id, confirmed_data)
 
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            UPDATE health_records
-            SET
-                confirmed_data = %s,
-                record_status = 'confirmed',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-            RETURNING
-                id,
-                worker_id,
-                raw_input,
-                input_language,
-                ai_suggested_data,
-                confirmed_data,
-                ai_status,
-                record_status
-            """,
-            (
-                confirmed_data_json,
-                record_id
-            )
+    except ConfirmConflict as conflict:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "This record was already confirmed with different details.",
+                "server_record": full_record(conflict.server_record),
+            }
         )
 
-        updated_record = cursor.fetchone()
-
-    db.commit()
-
     return {
-        "id": str(updated_record[0]),
-        "worker_id": str(updated_record[1]),
-        "raw_input": updated_record[2],
-        "input_language": updated_record[3],
-        "ai_suggested_data": updated_record[4],
-        "confirmed_data": updated_record[5],
-        "ai_status": updated_record[6],
-        "record_status": updated_record[7]
+        **_base(updated),
+        "raw_input": updated["raw_input"],
+        "input_language": updated["input_language"],
+        "ai_suggested_data": updated["ai_suggested_data"],
+        "confirmed_data": updated["confirmed_data"],
     }
-
