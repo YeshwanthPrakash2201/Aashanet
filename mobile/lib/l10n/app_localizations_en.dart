@@ -13,9 +13,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'AASHANet AI';
 
   @override
-  String get loginTitle => 'Login';
-
-  @override
   String get username => 'Username';
 
   @override
@@ -44,9 +41,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logout => 'Logout';
-
-  @override
-  String get settings => 'Settings';
 
   @override
   String get language => 'Language';
@@ -143,10 +137,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please enter or record the health information';
 
   @override
-  String get recordSavedLocallyOffline =>
-      'Record saved on this device, but it could not be sent to the server. Please try again later.';
-
-  @override
   String get reviewExtractedInformation => 'Review Extracted Information';
 
   @override
@@ -157,15 +147,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noLocalHealthRecords => 'No local health records yet.';
-
-  @override
-  String get workerLabel => 'Worker';
-
-  @override
-  String get notAssignedYet => 'Not assigned yet';
-
-  @override
-  String get statusLabel => 'Status';
 
   @override
   String get online => 'Online';
@@ -223,11 +204,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logInAgain => 'Log in again';
-
-  @override
-  String unsyncedCount(int count) {
-    return '$count not yet synced';
-  }
 
   @override
   String logoutUnsyncedWarning(int count) {

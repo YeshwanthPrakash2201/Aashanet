@@ -79,10 +79,14 @@ class ApiClient {
     };
   }
 
+  /// Sends a request and maps every failure to one of three exceptions.
+  /// [loginRequiredOn401] is false only for the login call itself, where
+  /// 401 means "wrong credentials" and the server's message must be kept.
   Future<Map<String, dynamic>> _send(
     String label,
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    bool loginRequiredOn401 = true,
+  }) async {
     final http.Response response;
 
     try {
@@ -99,7 +103,7 @@ class ApiClient {
 
     debugPrint('API $label -> ${response.statusCode}');
 
-    if (response.statusCode == 401) {
+    if (response.statusCode == 401 && loginRequiredOn401) {
       throw const LoginRequiredException();
     }
 
@@ -135,6 +139,51 @@ class ApiClient {
           .timeout(const Duration(seconds: 5));
       return response.statusCode == 200;
     } catch (_) {
+      return false;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // AUTHENTICATION
+  // ----------------------------------------------------------
+
+  /// Logs in (no token needed). Returns the server's login response with
+  /// access_token, username, role and full_name. Wrong credentials or a
+  /// disabled account give ApiException(401/403) whose detail is the
+  /// server's message; an unreachable server gives NetworkException.
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) {
+    return _send(
+      'login',
+      () => _http
+          .post(
+            _uri('/auth/login'),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'username': username, 'password': password}),
+          )
+          .timeout(_shortTimeout),
+      loginRequiredOn401: false,
+    );
+  }
+
+  /// Checks a saved session at start-up. Returns true if the server accepts
+  /// the token and false if it rejects it (expired or invalid). Throws
+  /// NetworkException when the server cannot be reached, and ApiException
+  /// for any other server error, so the caller can keep working offline.
+  Future<bool> isSessionValid() async {
+    final headers = await _headers(json: false);
+
+    try {
+      await _send(
+        'session check',
+        () => _http
+            .get(_uri('/auth/me'), headers: headers)
+            .timeout(const Duration(seconds: 5)),
+      );
+      return true;
+    } on LoginRequiredException {
       return false;
     }
   }

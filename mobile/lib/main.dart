@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 import 'l10n/app_localizations.dart';
+import 'infrastructure/api/api_client.dart';
 import 'infrastructure/auth/session_storage.dart';
 import 'infrastructure/settings/language_storage.dart';
 import 'presentation/screens/language_selection_screen.dart';
@@ -132,63 +130,32 @@ class StartupScreen extends StatelessWidget {
       return const LoginScreen();
     }
 
+    final home = HomeScreen(
+      username: username,
+      role: role,
+      fullName: fullName,
+      accessToken: accessToken,
+    );
+
     try {
-      final response = await http
-          .get(
-            Uri.parse('$baseUrl/auth/me'),
-            headers: {
-              'Authorization': 'Bearer $accessToken',
-            },
-          )
-          .timeout(
-            const Duration(seconds: 5),
-          );
+      final valid = await ApiClient(
+        baseUrl: baseUrl,
+        tokenProvider: () async => accessToken,
+      ).isSessionValid();
 
-      debugPrint(
-        'SESSION VALIDATION STATUS: ${response.statusCode}',
-      );
-
-      if (response.statusCode == 200) {
-        return HomeScreen(
-          username: username,
-          role: role,
-          fullName: fullName,
-          accessToken: accessToken,
-        );
-      }
-
-      if (response.statusCode == 401) {
-        debugPrint(
-          'SAVED SESSION EXPIRED OR INVALID',
-        );
-
+      if (!valid) {
+        // Expired or invalid login. Local records are kept; they sync
+        // after the same worker logs in again.
         await SessionStorage.clearSession();
-
         return const LoginScreen();
       }
 
-      debugPrint(
-        'SESSION VALIDATION UNEXPECTED STATUS: '
-        '${response.statusCode}',
-      );
-
-      return HomeScreen(
-        username: username,
-        role: role,
-        fullName: fullName,
-        accessToken: accessToken,
-      );
+      return home;
     } catch (e) {
-      debugPrint(
-        'SESSION VALIDATION NETWORK ERROR: $e',
-      );
-
-      return HomeScreen(
-        username: username,
-        role: role,
-        fullName: fullName,
-        accessToken: accessToken,
-      );
+      // Server unreachable or failing: continue offline with the saved
+      // session so the worker can keep recording.
+      debugPrint('SESSION CHECK SKIPPED: ${e.runtimeType}');
+      return home;
     }
   }
 
@@ -271,100 +238,53 @@ class _LoginScreenState
       isLoading = true;
     });
 
-    try {
-      final response = await http.post(
-        Uri.parse(
-          '$baseUrl/auth/login',
-        ),
-        headers: {
-          'Content-Type':
-              'application/json',
-        },
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data =
-            jsonDecode(response.body);
-
-        final accessToken =
-            data['access_token'];
-
-        final loggedInUsername =
-            data['username'];
-
-        final role =
-            data['role'];
-
-        final fullName =
-            data['full_name'];
-
-        await SessionStorage.saveSession(
-          accessToken: accessToken,
-          username: username,
-          role: role,
-          fullName: fullName,
-        );
-
-        if (!mounted) {
-          return;
-        }
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                HomeScreen(
-              username:
-                  loggedInUsername,
-              role: role,
-              fullName: fullName,
-              accessToken:
-                  accessToken,
-            ),
-          ),
-        );
-      } else {
-        final data =
-            jsonDecode(response.body);
-
-        final errorMessage =
-            data['detail'] ??
-                l10n.loginFailed;
-
-        if (!mounted) {
-          return;
-        }
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content: Text(
-              errorMessage.toString(),
-            ),
-          ),
+    void showMessage(String message) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
         );
       }
-    } catch (e) {
-      debugPrint(
-        'LOGIN CONNECTION ERROR: $e',
+    }
+
+    try {
+      final data = await ApiClient(
+        baseUrl: baseUrl,
+        tokenProvider: () async => null, // login needs no token
+      ).login(username: username, password: password);
+
+      final accessToken = data['access_token'] as String;
+      final role = data['role'] as String;
+      final fullName = data['full_name'] as String;
+
+      await SessionStorage.saveSession(
+        accessToken: accessToken,
+        username: username,
+        role: role,
+        fullName: fullName,
       );
 
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.couldNotConnectServer,
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(
+            username: data['username'] as String,
+            role: role,
+            fullName: fullName,
+            accessToken: accessToken,
           ),
         ),
       );
+    } on ApiException catch (e) {
+      // Wrong credentials, disabled account or validation error: show the
+      // server's message when it sent one.
+      showMessage(e.detail is String ? e.detail as String : l10n.loginFailed);
+    } catch (e) {
+      debugPrint('LOGIN FAILED: ${e.runtimeType}');
+      showMessage(l10n.couldNotConnectServer);
     } finally {
       if (mounted) {
         setState(() {

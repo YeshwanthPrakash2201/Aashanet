@@ -106,12 +106,6 @@ abstract class AppLocalizations {
   /// **'AASHANet AI'**
   String get appName;
 
-  /// No description provided for @loginTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Login'**
-  String get loginTitle;
-
   /// No description provided for @username.
   ///
   /// In en, this message translates to:
@@ -171,12 +165,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logout'**
   String get logout;
-
-  /// No description provided for @settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settings;
 
   /// No description provided for @language.
   ///
@@ -358,12 +346,6 @@ abstract class AppLocalizations {
   /// **'Please enter or record the health information'**
   String get pleaseEnterOrRecordHealthInfo;
 
-  /// No description provided for @recordSavedLocallyOffline.
-  ///
-  /// In en, this message translates to:
-  /// **'Record saved on this device, but it could not be sent to the server. Please try again later.'**
-  String get recordSavedLocallyOffline;
-
   /// No description provided for @reviewExtractedInformation.
   ///
   /// In en, this message translates to:
@@ -387,24 +369,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No local health records yet.'**
   String get noLocalHealthRecords;
-
-  /// No description provided for @workerLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Worker'**
-  String get workerLabel;
-
-  /// No description provided for @notAssignedYet.
-  ///
-  /// In en, this message translates to:
-  /// **'Not assigned yet'**
-  String get notAssignedYet;
-
-  /// No description provided for @statusLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Status'**
-  String get statusLabel;
 
   /// No description provided for @online.
   ///
@@ -513,12 +477,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log in again'**
   String get logInAgain;
-
-  /// No description provided for @unsyncedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} not yet synced'**
-  String unsyncedCount(int count);
 
   /// No description provided for @logoutUnsyncedWarning.
   ///

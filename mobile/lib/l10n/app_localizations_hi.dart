@@ -13,9 +13,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get appName => 'AASHANet AI';
 
   @override
-  String get loginTitle => 'लॉगिन';
-
-  @override
   String get username => 'उपयोगकर्ता नाम';
 
   @override
@@ -44,9 +41,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get logout => 'लॉगआउट';
-
-  @override
-  String get settings => 'सेटिंग्स';
 
   @override
   String get language => 'भाषा';
@@ -145,10 +139,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'कृपया स्वास्थ्य संबंधी जानकारी लिखें या आवाज़ में रिकॉर्ड करें';
 
   @override
-  String get recordSavedLocallyOffline =>
-      'रिकॉर्ड इस डिवाइस पर सहेजा गया है, लेकिन सर्वर पर नहीं भेजा जा सका। कृपया बाद में पुनः प्रयास करें।';
-
-  @override
   String get reviewExtractedInformation => 'निकाली गई जानकारी की समीक्षा करें';
 
   @override
@@ -160,15 +150,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get noLocalHealthRecords =>
       'अभी तक कोई स्थानीय स्वास्थ्य रिकॉर्ड नहीं है।';
-
-  @override
-  String get workerLabel => 'कार्यकर्ता';
-
-  @override
-  String get notAssignedYet => 'अभी तक आवंटित नहीं किया गया';
-
-  @override
-  String get statusLabel => 'स्थिति';
 
   @override
   String get online => 'ऑनलाइन';
@@ -226,11 +207,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get logInAgain => 'फिर से लॉगिन करें';
-
-  @override
-  String unsyncedCount(int count) {
-    return '$count अभी सिंक नहीं हुए';
-  }
 
   @override
   String logoutUnsyncedWarning(int count) {

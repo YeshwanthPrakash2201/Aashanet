@@ -39,3 +39,6 @@ mobile/ios/Flutter/Generated.xcconfig
 *.log
 .DS_Store
 Thumbs.db
+
+# Python build artifacts (large binary wheels do not belong in the repository)
+*.whl

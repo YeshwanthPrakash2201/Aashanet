@@ -13,9 +13,6 @@ class AppLocalizationsKn extends AppLocalizations {
   String get appName => 'AASHANet AI';
 
   @override
-  String get loginTitle => 'ಲಾಗಿನ್';
-
-  @override
   String get username => 'ಬಳಕೆದಾರ ಹೆಸರು';
 
   @override
@@ -44,9 +41,6 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get logout => 'ಲಾಗ್ ಔಟ್';
-
-  @override
-  String get settings => 'ಸೆಟ್ಟಿಂಗ್ಸ್';
 
   @override
   String get language => 'ಭಾಷೆ';
@@ -145,10 +139,6 @@ class AppLocalizationsKn extends AppLocalizations {
       'ದಯವಿಟ್ಟು ಆರೋಗ್ಯ ಮಾಹಿತಿಯನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಧ್ವನಿಯಾಗಿ ದಾಖಲಿಸಿ';
 
   @override
-  String get recordSavedLocallyOffline =>
-      'ದಾಖಲೆಯನ್ನು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ, ಆದರೆ ಸರ್ವರ್‌ಗೆ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
-
-  @override
   String get reviewExtractedInformation => 'ಹೊರತೆಗೆದ ಮಾಹಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ';
 
   @override
@@ -159,15 +149,6 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get noLocalHealthRecords => 'ಇನ್ನೂ ಸ್ಥಳೀಯ ಆರೋಗ್ಯ ದಾಖಲೆಗಳಿಲ್ಲ.';
-
-  @override
-  String get workerLabel => 'ಕಾರ್ಯಕರ್ತೆ';
-
-  @override
-  String get notAssignedYet => 'ಇನ್ನೂ ನಿಯೋಜಿಸಲಾಗಿಲ್ಲ';
-
-  @override
-  String get statusLabel => 'ಸ್ಥಿತಿ';
 
   @override
   String get online => 'ಆನ್‌ಲೈನ್';
@@ -226,11 +207,6 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get logInAgain => 'ಮತ್ತೆ ಲಾಗಿನ್ ಮಾಡಿ';
-
-  @override
-  String unsyncedCount(int count) {
-    return '$count ಇನ್ನೂ ಸಿಂಕ್ ಆಗಿಲ್ಲ';
-  }
 
   @override
   String logoutUnsyncedWarning(int count) {

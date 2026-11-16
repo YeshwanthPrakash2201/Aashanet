@@ -55,10 +55,6 @@ class HealthRecordLocalRepository {
         .getSingleOrNull();
   }
 
-  Stream<HealthRecord?> watchRecord(String id) {
-    return (database.select(_table)..where((t) => t.id.equals(id)))
-        .watchSingleOrNull();
-  }
 
   /// Records belonging to [username], newest first. Updates live while
   /// the sync service changes statuses.

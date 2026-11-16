@@ -12,9 +12,4 @@ class LanguageStorage {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_languageKey);
   }
-
-  Future<void> clearLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_languageKey);
-  }
 }

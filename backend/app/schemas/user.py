@@ -8,13 +8,6 @@ class UserCreate(BaseModel):
     full_name: str
 
 
-class UserResponse(BaseModel):
-    id: str
-    username: str
-    role: str
-    full_name: str
-    is_active: bool
-
 class LoginRequest(BaseModel):
     username: str
     password: str

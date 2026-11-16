@@ -86,10 +86,6 @@ class Breakpoints {
   static const tablet = 640.0;
   static const desktop = 1000.0;
 
-  static bool isTablet(BuildContext c) =>
-      MediaQuery.sizeOf(c).width >= tablet;
-  static bool isDesktop(BuildContext c) =>
-      MediaQuery.sizeOf(c).width >= desktop;
 }
 
 class AppTheme {

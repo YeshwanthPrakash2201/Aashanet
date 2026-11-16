@@ -1,6 +1,5 @@
 {
   "appName": "AASHANet AI",
-  "loginTitle": "Login",
   "username": "Username",
   "password": "Password",
   "login": "Login",
@@ -11,7 +10,6 @@
   "typingOption": "Typing Option",
   "tasks": "Tasks",
   "logout": "Logout",
-  "settings": "Settings",
   "language": "Language",
   "selectLanguage": "Select your default language",
   "english": "English",
@@ -42,14 +40,10 @@
   "couldNotRecordVoice": "Could not record voice",
   "couldNotSaveRecordLocally": "Could not save record locally",
   "pleaseEnterOrRecordHealthInfo": "Please enter or record the health information",
-  "recordSavedLocallyOffline": "Record saved on this device, but it could not be sent to the server. Please try again later.",
   "reviewExtractedInformation": "Review Extracted Information",
   "localHealthRecords": "Local Health Records",
   "couldNotLoadRecords": "Could not load records",
   "noLocalHealthRecords": "No local health records yet.",
-  "workerLabel": "Worker",
-  "notAssignedYet": "Not assigned yet",
-  "statusLabel": "Status",
   "online": "Online",
   "offline": "Offline",
   "syncing": "Syncing…",
@@ -68,14 +62,6 @@
   "savedAiRetry": "Saved. AI processing did not finish; it will retry automatically.",
   "loginToSync": "Your login has expired. Log in again to sync your records.",
   "logInAgain": "Log in again",
-  "unsyncedCount": "{count} not yet synced",
-  "@unsyncedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "logoutUnsyncedWarning": "{count} records are not yet synced. They stay on this phone and will sync after you log in again.",
   "@logoutUnsyncedWarning": {
     "placeholders": {

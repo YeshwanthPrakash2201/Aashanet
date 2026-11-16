@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show Ticker;
 
@@ -954,7 +952,3 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-
-/// Clamp helper used by responsive grids.
-int columnsFor(double width, {int max = 3}) =>
-    math.max(1, math.min(max, (width / 300).floor()));
