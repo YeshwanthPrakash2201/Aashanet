@@ -10,19 +10,18 @@ import 'l10n/app_localizations.dart';
 import 'infrastructure/auth/session_storage.dart';
 import 'infrastructure/settings/language_storage.dart';
 import 'presentation/screens/language_selection_screen.dart';
-import 'package:mobile/infrastructure/database/app_database.dart';
-import 'package:mobile/domain/repositories/health_record_local_repository.dart';
+import 'application/app_services.dart';
+import 'config.dart';
+import 'domain/record_status.dart';
+import 'infrastructure/database/app_database.dart';
+import 'presentation/review_data.dart';
+import 'presentation/screens/local_records_screen.dart';
+import 'presentation/widgets/sync_status_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const AashaNetApp());
 }
-
-// ============================================================
-// CONFIGURATION
-// ============================================================
-
-const String baseUrl = 'http://192.168.31.52:8000';
 
 // ============================================================
 // AASHANET APP
@@ -173,8 +172,8 @@ class StartupScreen extends StatelessWidget {
       }
 
       debugPrint(
-        'SESSION VALIDATION UNEXPECTED RESPONSE: '
-        '${response.body}',
+        'SESSION VALIDATION UNEXPECTED STATUS: '
+        '${response.statusCode}',
       );
 
       return HomeScreen(
@@ -555,7 +554,7 @@ class _LoginScreenState
 // HOME SCREEN
 // ============================================================
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.username,
@@ -570,186 +569,262 @@ class HomeScreen extends StatelessWidget {
   final String accessToken;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver {
+  AppServices? _services;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startServices();
+  }
+
+  Future<void> _startServices() async {
+    final services = await AppServices.startFor(widget.username);
+
+    if (mounted) {
+      setState(() {
+        _services = services;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Coming back to the app: re-check the connection and sync anything
+  // saved while it was in the background.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final services = _services;
+
+    if (state == AppLifecycleState.resumed && services != null) {
+      services.connectivity.checkNow().then((online) {
+        if (online) {
+          services.sync.syncAll();
+        }
+      });
+    }
+  }
+
+  void _openRecordScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecordScreen(
+          accessToken: widget.accessToken,
+        ),
+      ),
+    );
+  }
+
+  void _openReview(BuildContext context, HealthRecord record) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReviewRecordScreen(
+          localRecordId: record.id,
+          recordData: reviewDataFor(record),
+        ),
+      ),
+    );
+  }
+
+  /// Ends the session. Local records are never deleted: they stay on
+  /// the phone and sync after the same worker logs in again.
+  Future<void> _logout({bool loginExpired = false}) async {
+    final l10n = AppLocalizations.of(context)!;
+    final services = _services;
+
+    if (!loginExpired && services != null) {
+      final unsynced = await services.records
+          .watchUnsyncedCount(services.username)
+          .first;
+
+      if (unsynced > 0 && mounted) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.logout),
+            content: Text(l10n.logoutUnsyncedWarning(unsynced)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.logout),
+              ),
+            ],
+          ),
+        );
+
+        if (proceed != true) {
+          return;
+        }
+      }
+    }
+
+    AppServices.stop();
+    await SessionStorage.clearSession();
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  Widget _menuButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: SizedBox(
+        width: double.infinity,
+        height: 60,
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(
+            label,
+            style: const TextStyle(fontSize: 17),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final l10n =
-        AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
+    final services = _services;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'AASHANet AI',
-        ),
+        title: const Text('AASHANet AI'),
         centerTitle: true,
+        actions: [
+          if (services != null) ConnectionStatusBadge(services: services),
+          IconButton(
+            tooltip: l10n.logout,
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
       ),
-      body: Padding(
-        padding:
-            const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.welcome,
-              style:
-                  const TextStyle(
-                fontSize: 18,
-              ),
+      body: Column(
+        children: [
+          if (services != null)
+            LoginRequiredBanner(
+              services: services,
+              onLogInAgain: () => _logout(loginExpired: true),
             ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              fullName,
-              style:
-                  const TextStyle(
-                fontSize: 28,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              '${l10n.role}: $role',
-              style:
-                  const TextStyle(
-                fontSize: 16,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 60,
-              child:
-                  ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              RecordScreen(
-                        accessToken:
-                            accessToken,
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.note_add,
-                ),
-                label: Text(
-                  l10n.record,
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.welcome,
+                    style: const TextStyle(fontSize: 18),
                   ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 60,
-              child:
-                  ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              const LocalRecordsScreen(),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.fullName,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.folder_open,
-                ),
-                label: Text(
-                  l10n.dataShowing,
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
                   ),
-                ),
-              ),
-            ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.role}: ${widget.role}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  if (services != null)
+                    StreamBuilder<int>(
+                      stream: services.records
+                          .watchUnsyncedCount(services.username),
+                      builder: (context, snapshot) {
+                        final count = snapshot.data ?? 0;
 
-            const SizedBox(height: 15),
+                        if (count == 0) {
+                          return const SizedBox.shrink();
+                        }
 
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 60,
-              child:
-                  ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              RecordScreen(
-                        accessToken:
-                            accessToken,
-                      ),
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.cloud_upload_outlined,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(l10n.unsyncedCount(count)),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.keyboard,
-                ),
-                label: Text(
-                  l10n.typingOption,
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
+                  const SizedBox(height: 30),
+                  _menuButton(
+                    icon: Icons.note_add,
+                    label: l10n.record,
+                    onPressed: services != null ? _openRecordScreen : null,
                   ),
-                ),
+                  _menuButton(
+                    icon: Icons.folder_open,
+                    label: l10n.dataShowing,
+                    onPressed: services == null
+                        ? null
+                        : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LocalRecordsScreen(
+                                  services: services,
+                                  onReview: _openReview,
+                                ),
+                              ),
+                            ),
+                  ),
+                  _menuButton(
+                    icon: Icons.keyboard,
+                    label: l10n.typingOption,
+                    onPressed: services != null ? _openRecordScreen : null,
+                  ),
+                  _menuButton(
+                    icon: Icons.task_alt,
+                    label: l10n.tasks,
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tasks feature coming next'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 15),
-
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 60,
-              child:
-                  ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger
-                          .of(context)
-                      .showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Tasks feature coming next',
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.task_alt,
-                ),
-                label: Text(
-                  l10n.tasks,
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -789,27 +864,10 @@ class _RecordScreenState
 
   bool isProcessing = false;
 
-  final AppDatabase _database =
-      AppDatabase();
-
-  late final HealthRecordLocalRepository
-      _localRepository;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _localRepository =
-        HealthRecordLocalRepository(
-      _database,
-    );
-  }
-
   @override
   void dispose() {
     _audioRecorder.dispose();
     rawRecordController.dispose();
-    _database.close();
 
     super.dispose();
   }
@@ -919,84 +977,41 @@ class _RecordScreenState
     }
   }
 
-  Future<void> _markLocalRecord(
-    String localRecordId, {
-    required bool synced,
-  }) async {
-    try {
-      if (synced) {
-        await _localRepository
-            .markAsSynced(localRecordId);
-      } else {
-        await _localRepository
-            .markAsFailed(localRecordId);
-      }
-    } catch (e) {
-      debugPrint(
-        'LOCAL SYNC STATUS UPDATE ERROR: $e',
-      );
-    }
-  }
-
+  /// Saves the record on the phone first (works offline), then - if the
+  /// server is reachable - uploads it and runs AI processing straight
+  /// away. Offline, or if the AI does not finish, the record waits in
+  /// the sync queue and is processed automatically later.
   Future<void> processRecord() async {
-    final rawText =
-        rawRecordController.text.trim();
+    final rawText = rawRecordController.text.trim();
 
-    if (rawText.isEmpty &&
-        _audioPath == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-         SnackBar(
-          content: Text(
-            l10n.pleaseEnterOrRecordHealthInfo,
-          ),
+    if (rawText.isEmpty && _audioPath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.pleaseEnterOrRecordHealthInfo),
         ),
       );
-
       return;
     }
+
+    final services = AppServices.current;
+    final hasAudio = _audioPath != null;
 
     setState(() {
       isProcessing = true;
     });
 
-    final serverRawInput =
-        rawText.isEmpty
-            ? '[Voice recording]'
-            : rawText;
-
-    final inputLanguage =
-        rawText.isEmpty
-            ? 'Kannada'
-            : 'en';
-
-    final localRecordId =
-        'local-${DateTime.now().millisecondsSinceEpoch}';
+    // 1. Save on the phone. This never needs the internet.
+    final String localRecordId;
 
     try {
-      await _localRepository
-          .saveHealthRecord(
-        id: localRecordId,
-        workerId: null,
-        rawInput: serverRawInput,
-        inputLanguage:
-            inputLanguage,
+      localRecordId = await services.records.saveNewRecord(
+        ownerUsername: services.username,
+        rawInput: rawText.isEmpty ? '[Voice recording]' : rawText,
+        inputLanguage: hasAudio ? 'Kannada' : 'en',
         audioPath: _audioPath,
       );
-
-      debugPrint(
-        'LOCAL DATABASE: '
-        'Health record saved successfully',
-      );
-
-      debugPrint(
-        'LOCAL RECORD ID: '
-        '$localRecordId',
-      );
     } catch (e) {
-      debugPrint(
-        'LOCAL SAVE ERROR: $e',
-      );
+      debugPrint('LOCAL SAVE ERROR: ${e.runtimeType}');
 
       if (!mounted) {
         return;
@@ -1006,244 +1021,64 @@ class _RecordScreenState
         isProcessing = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            '${l10n.couldNotSaveRecordLocally}: $e',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.couldNotSaveRecordLocally)),
       );
-
       return;
     }
 
-    try {
-      final createResponse =
-          await http.post(
-        Uri.parse(
-          '$baseUrl/health-records',
-        ),
-        headers: {
-          'Content-Type':
-              'application/json',
-          'Authorization':
-              'Bearer ${widget.accessToken}',
-        },
-        body: jsonEncode({
-          'raw_input':
-              serverRawInput,
-          'input_language':
-              inputLanguage,
-        }),
-      ).timeout(
-        const Duration(seconds: 20),
-      );
+    // 2. Online: upload and run AI now, so the worker can review at once.
+    HealthRecord? record;
 
-      debugPrint(
-        'CREATE STATUS: '
-        '${createResponse.statusCode}',
-      );
+    if (await services.connectivity.checkNow()) {
+      record = await services.sync.syncRecord(localRecordId);
+    }
 
-      debugPrint(
-        'CREATE RESPONSE: '
-        '${createResponse.body}',
-      );
+    if (!mounted) {
+      return;
+    }
 
-      if (createResponse.statusCode !=
-              200 &&
-          createResponse.statusCode !=
-              201) {
-        throw Exception(
-          'Failed to create health record: '
-          '${createResponse.body}',
-        );
-      }
+    setState(() {
+      isProcessing = false;
+    });
 
-      final createdData =
-          jsonDecode(
-        createResponse.body,
-      );
+    final aiFinished = record != null &&
+        record.serverRecordId != null &&
+        (record.aiStatus == AiStatus.completed ||
+            record.aiStatus == AiStatus.failed);
 
-      final recordId =
-          createdData['id'];
-
-      if (recordId == null) {
-        throw Exception(
-          'Backend did not return record ID',
-        );
-      }
-
-      final workerId =
-          createdData['worker_id'];
-
-      if (workerId == null) {
-        throw Exception(
-          'Backend did not return worker ID',
-        );
-      }
-
-      await _localRepository
-          .linkServerRecord(
-        localRecordId:
-            localRecordId,
-        serverRecordId:
-            recordId.toString(),
-        workerId:
-            workerId.toString(),
-      );
-
-      late Map<String, dynamic>
-          processedData;
-
-      if (_audioPath != null) {
-        final request =
-            http.MultipartRequest(
-          'POST',
-          Uri.parse(
-            '$baseUrl/health-records/'
-            '$recordId/process-audio',
-          ),
-        );
-
-        request.headers[
-                'Authorization'] =
-            'Bearer ${widget.accessToken}';
-
-        request.fields[
-                'language'] =
-            'Kannada';
-
-        request.files.add(
-          await http.MultipartFile
-              .fromPath(
-            'audio',
-            _audioPath!,
-          ),
-        );
-
-        final streamedResponse =
-            await request.send();
-
-        final response =
-            await http.Response
-                .fromStream(
-          streamedResponse,
-        );
-
-        debugPrint(
-          'AUDIO PROCESS STATUS: '
-          '${response.statusCode}',
-        );
-
-        debugPrint(
-          'AUDIO PROCESS RESPONSE: '
-          '${response.body}',
-        );
-
-        if (response.statusCode !=
-            200) {
-          throw Exception(
-            'Failed to process audio: '
-            '${response.body}',
-          );
-        }
-
-        processedData =
-            jsonDecode(
-          response.body,
-        );
-      } else {
-        final processResponse =
-            await http.post(
-          Uri.parse(
-            '$baseUrl/health-records/'
-            '$recordId/process',
-          ),
-          headers: {
-            'Content-Type':
-                'application/json',
-            'Authorization':
-                'Bearer ${widget.accessToken}',
-          },
-        );
-
-        debugPrint(
-          'PROCESS STATUS: '
-          '${processResponse.statusCode}',
-        );
-
-        debugPrint(
-          'PROCESS RESPONSE: '
-          '${processResponse.body}',
-        );
-
-        if (processResponse.statusCode !=
-            200) {
-          throw Exception(
-            'Failed to process health record: '
-            '${processResponse.body}',
-          );
-        }
-
-        processedData =
-            jsonDecode(
-          processResponse.body,
-        );
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        isProcessing = false;
-      });
-
-      Navigator.push(
+    if (aiFinished) {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ReviewRecordScreen(
-            accessToken:
-                widget.accessToken,
-            recordData:
-                processedData,
-            localRecordId:
-                localRecordId,
-            localRepository:
-                _localRepository,
+          builder: (context) => ReviewRecordScreen(
+            localRecordId: localRecordId,
+            recordData: reviewDataFor(record!),
           ),
         ),
       );
-    } catch (e) {
-      debugPrint(
-        'BACKEND PROCESSING ERROR: $e',
-      );
-
-      await _markLocalRecord(
-        localRecordId,
-        synced: false,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        isProcessing = false;
-      });
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.recordSavedLocallyOffline,
-          ),
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      return;
     }
+
+    // 3. Saved, but AI has not run yet. Tell the worker honestly.
+    final String message;
+
+    if (record?.lastSyncError == SyncError.loginRequired) {
+      message = l10n.loginToSync;
+    } else if (record == null || record.lastSyncError == SyncError.network) {
+      message = l10n.savedOfflineAiPending;
+    } else {
+      message = l10n.savedAiRetry;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+
+    Navigator.pop(context);
   }
 
   @override
@@ -1417,21 +1252,15 @@ class ReviewRecordScreen
     extends StatefulWidget {
   const ReviewRecordScreen({
     super.key,
-    required this.accessToken,
-    required this.recordData,
     required this.localRecordId,
-    required this.localRepository,
+    required this.recordData,
   });
 
-  final String accessToken;
-  final Map<String, dynamic>
-      recordData;
-
-  // Local SQLite id of this record, so its sync status can be
-  // updated once the server confirms (or rejects) it.
+  // Local SQLite id of the record being reviewed.
   final String localRecordId;
-  final HealthRecordLocalRepository
-      localRepository;
+
+  // AI suggestions and original input (see reviewDataFor).
+  final Map<String, dynamic> recordData;
 
   @override
   State<ReviewRecordScreen>
@@ -1515,45 +1344,11 @@ class ReviewRecordScreen
     super.dispose();
   }
 
-  Future<void> _updateLocalSyncStatus({
-    required bool synced,
-  }) async {
-    try {
-      if (synced) {
-        await widget.localRepository
-            .markAsSynced(
-          widget.localRecordId,
-        );
-      } else {
-        await widget.localRepository
-            .markAsFailed(
-          widget.localRecordId,
-        );
-      }
-    } catch (e) {
-      debugPrint(
-        'LOCAL SYNC STATUS UPDATE ERROR: $e',
-      );
-    }
-  }
-
+  /// Saves the worker's confirmed details on the phone first, then sends
+  /// them to the server if it is reachable. Offline, the confirmation
+  /// waits in the sync queue. Only what the worker confirmed here is
+  /// stored as the record's details - never the raw AI suggestions.
   Future<void> confirmRecord() async {
-    final recordId =
-        widget.recordData['id'];
-
-    if (recordId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Record ID is missing',
-          ),
-        ),
-      );
-
-      return;
-    }
-
     final patientName =
         patientNameController.text.trim();
 
@@ -1617,112 +1412,20 @@ class ReviewRecordScreen
       isSaving = true;
     });
 
+    final services = AppServices.current;
+
     try {
-      final response =
-          await http.post(
-        Uri.parse(
-          '$baseUrl/health-records/'
-          '$recordId/confirm',
-        ),
-        headers: {
-          'Content-Type':
-              'application/json',
-          'Authorization':
-              'Bearer ${widget.accessToken}',
-        },
-        body: jsonEncode({
-          'patient_name':
-              patientName,
+      await services.records.saveConfirmation(
+        id: widget.localRecordId,
+        confirmedData: {
+          'patient_name': patientName,
           'age': age,
           'symptoms': symptoms,
-          'duration':
-              duration.isEmpty
-                  ? null
-                  : duration,
-        }),
-      );
-
-      debugPrint(
-        'CONFIRM STATUS: '
-        '${response.statusCode}',
-      );
-
-      debugPrint(
-        'CONFIRM RESPONSE: '
-        '${response.body}',
-      );
-
-      if (response.statusCode !=
-          200) {
-        throw Exception(
-          'Failed to confirm record: '
-          '${response.body}',
-        );
-      }
-
-      await _updateLocalSyncStatus(
-        synced: true,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        isSaving = false;
-      });
-
-      await showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                ),
-                SizedBox(width: 10),
-                Text(
-                  'Record Confirmed',
-                ),
-              ],
-            ),
-            content: const Text(
-              'The health record has been '
-              'reviewed and successfully '
-              'confirmed.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(
-                    context,
-                  );
-                },
-                child:
-                    const Text('OK'),
-              ),
-            ],
-          );
+          'duration': duration.isEmpty ? null : duration,
         },
       );
-
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.popUntil(
-        context,
-        (route) => route.isFirst,
-      );
     } catch (e) {
-      debugPrint(
-        'CONFIRM RECORD ERROR: $e',
-      );
-
-      await _updateLocalSyncStatus(
-        synced: false,
-      );
+      debugPrint('LOCAL CONFIRM ERROR: ${e.runtimeType}');
 
       if (!mounted) {
         return;
@@ -1732,15 +1435,66 @@ class ReviewRecordScreen
         isSaving = false;
       });
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content: Text(
-            'Could not save record: $e',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.couldNotSaveRecordLocally)),
       );
+      return;
     }
+
+    HealthRecord? record;
+
+    if (await services.connectivity.checkNow()) {
+      record = await services.sync.syncRecord(widget.localRecordId);
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      isSaving = false;
+    });
+
+    final conflict = record?.syncStatus == SyncStatus.conflict;
+    final synced = record?.syncStatus == SyncStatus.synced;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(conflict ? Icons.warning_amber : Icons.check_circle),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  conflict ? l10n.conflictTitle : l10n.recordConfirmedTitle,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            conflict
+                ? l10n.conflictBody
+                : synced
+                    ? l10n.confirmedSynced
+                    : l10n.confirmedOffline,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   @override
@@ -1791,6 +1545,16 @@ class ReviewRecordScreen
             const Text(
               'Review and edit the information '
               'extracted by AASHANet AI before saving.',
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              l10n.aiNotVerifiedNotice,
+              style: TextStyle(
+                color: Colors.orange.shade900,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 25),
             const Text(
@@ -1968,135 +1732,6 @@ class ReviewRecordScreen
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ============================================================
-// LOCAL RECORDS SCREEN
-// ============================================================
-
-class LocalRecordsScreen
-    extends StatefulWidget {
-  const LocalRecordsScreen({
-    super.key,
-  });
-
-  @override
-  State<LocalRecordsScreen>
-      createState() =>
-          _LocalRecordsScreenState();
-}
-
-class _LocalRecordsScreenState
-    extends State<LocalRecordsScreen> {
-  AppLocalizations get l10n =>
-    AppLocalizations.of(context)!;
-  final AppDatabase _database =
-      AppDatabase();
-
-  late final HealthRecordLocalRepository
-      _repository;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _repository =
-        HealthRecordLocalRepository(
-      _database,
-    );
-  }
-
-  @override
-  void dispose() {
-    _database.close();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.localHealthRecords),
-      ),
-      body: FutureBuilder(
-        future:
-            _repository.getAllRecords(),
-        builder:
-            (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child:
-                  CircularProgressIndicator(),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                '${l10n.couldNotLoadRecords}:\n'
-                '${snapshot.error}',
-                textAlign:
-                    TextAlign.center,
-              ),
-            );
-          }
-
-          final records =
-              snapshot.data ?? [];
-
-          if (records.isEmpty) {
-            return Center(
-              child: Text(
-                l10n.noLocalHealthRecords,
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding:
-                const EdgeInsets.all(16),
-            itemCount:
-                records.length,
-            itemBuilder:
-                (context, index) {
-              final record =
-                  records[index];
-
-              return Card(
-                margin:
-                    const EdgeInsets.only(
-                  bottom: 12,
-                ),
-                child: ListTile(
-                  leading:
-                      const CircleAvatar(
-                    child: Icon(
-                      Icons
-                          .medical_information,
-                    ),
-                  ),
-                  title: Text(
-                    record.rawInput,
-                    maxLines: 2,
-                    overflow:
-                        TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    '${l10n.workerLabel}: '
-                    '${record.workerId ?? l10n.notAssignedYet}\n'
-                    '${l10n.statusLabel}: '
-                    '${record.syncStatus}',
-                  ),
-                  isThreeLine: true,
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }

@@ -168,4 +168,129 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get statusLabel => 'ಸ್ಥಿತಿ';
+
+  @override
+  String get online => 'ಆನ್‌ಲೈನ್';
+
+  @override
+  String get offline => 'ಆಫ್‌ಲೈನ್';
+
+  @override
+  String get syncing => 'ಸಿಂಕ್ ಆಗುತ್ತಿದೆ…';
+
+  @override
+  String get syncNow => 'ಈಗ ಸಿಂಕ್ ಮಾಡಿ';
+
+  @override
+  String get statusSavedOffline => 'ಆಫ್‌ಲೈನ್ ಉಳಿಸಲಾಗಿದೆ';
+
+  @override
+  String get statusPendingSync => 'ಸಿಂಕ್ ಬಾಕಿ ಇದೆ';
+
+  @override
+  String get statusUploading => 'ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ';
+
+  @override
+  String get statusSynced => 'ಸಿಂಕ್ ಆಗಿದೆ';
+
+  @override
+  String get statusSyncFailed => 'ಸಿಂಕ್ ವಿಫಲ – ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲಾಗುವುದು';
+
+  @override
+  String get statusConflict => 'ನಿಮ್ಮ ನಿರ್ಧಾರ ಬೇಕಾಗಿದೆ';
+
+  @override
+  String get aiPending => 'AI ಪ್ರಕ್ರಿಯೆ ಬಾಕಿ ಇದೆ (ಇಂಟರ್ನೆಟ್ ಅಗತ್ಯ)';
+
+  @override
+  String get aiCompleted => 'AI ಪ್ರಕ್ರಿಯೆ ಪೂರ್ಣ – ಪರಿಶೀಲನೆ ಅಗತ್ಯ';
+
+  @override
+  String get aiFailed =>
+      'AI ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲು ಆಗಲಿಲ್ಲ – ವಿವರಗಳನ್ನು ನೀವೇ ನಮೂದಿಸಿ';
+
+  @override
+  String get statusConfirmed => 'ದೃಢೀಕರಿಸಲಾಗಿದೆ';
+
+  @override
+  String get savedOfflineAiPending =>
+      'ಈ ಫೋನ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ. ಆನ್‌ಲೈನ್ ಆದಾಗ AI ಪ್ರಕ್ರಿಯೆ ನಡೆಯುತ್ತದೆ.';
+
+  @override
+  String get savedAiRetry =>
+      'ಉಳಿಸಲಾಗಿದೆ. AI ಪ್ರಕ್ರಿಯೆ ಪೂರ್ಣವಾಗಲಿಲ್ಲ; ಅದು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸುತ್ತದೆ.';
+
+  @override
+  String get loginToSync =>
+      'ನಿಮ್ಮ ಲಾಗಿನ್ ಅವಧಿ ಮುಗಿದಿದೆ. ದಾಖಲೆಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು ಮತ್ತೆ ಲಾಗಿನ್ ಮಾಡಿ.';
+
+  @override
+  String get logInAgain => 'ಮತ್ತೆ ಲಾಗಿನ್ ಮಾಡಿ';
+
+  @override
+  String unsyncedCount(int count) {
+    return '$count ಇನ್ನೂ ಸಿಂಕ್ ಆಗಿಲ್ಲ';
+  }
+
+  @override
+  String logoutUnsyncedWarning(int count) {
+    return '$count ದಾಖಲೆಗಳು ಇನ್ನೂ ಸಿಂಕ್ ಆಗಿಲ್ಲ. ಅವು ಈ ಫೋನ್‌ನಲ್ಲೇ ಇರುತ್ತವೆ ಮತ್ತು ಮತ್ತೆ ಲಾಗಿನ್ ಆದ ನಂತರ ಸಿಂಕ್ ಆಗುತ್ತವೆ.';
+  }
+
+  @override
+  String get cancel => 'ರದ್ದುಮಾಡಿ';
+
+  @override
+  String get recordConfirmedTitle => 'ದಾಖಲೆ ದೃಢೀಕರಿಸಲಾಗಿದೆ';
+
+  @override
+  String get confirmedSynced => 'ದಾಖಲೆಯನ್ನು ದೃಢೀಕರಿಸಿ ಸರ್ವರ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ.';
+
+  @override
+  String get confirmedOffline =>
+      'ಈ ಫೋನ್‌ನಲ್ಲಿ ದೃಢೀಕರಿಸಲಾಗಿದೆ. ಆನ್‌ಲೈನ್ ಆದಾಗ ಸರ್ವರ್‌ಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.';
+
+  @override
+  String get conflictTitle => 'ಸರ್ವರ್‌ನಲ್ಲಿ ಬೇರೆ ಆವೃತ್ತಿ ಇದೆ';
+
+  @override
+  String get conflictBody =>
+      'ಈ ದಾಖಲೆಯನ್ನು ಈಗಾಗಲೇ ಬೇರೆ ವಿವರಗಳೊಂದಿಗೆ ದೃಢೀಕರಿಸಲಾಗಿದೆ. ಯಾವುದನ್ನೂ ಬದಲಾಯಿಸಲಾಗಿಲ್ಲ.';
+
+  @override
+  String get yourVersion => 'ನಿಮ್ಮ ಆವೃತ್ತಿ';
+
+  @override
+  String get serverVersion => 'ಸರ್ವರ್ ಆವೃತ್ತಿ';
+
+  @override
+  String get useServerVersion => 'ಸರ್ವರ್ ಆವೃತ್ತಿ ಬಳಸಿ';
+
+  @override
+  String get later => 'ನಂತರ';
+
+  @override
+  String get recordDetails => 'ದಾಖಲೆ ವಿವರಗಳು';
+
+  @override
+  String get audioKeptOnPhone => 'ಆಡಿಯೋ ರೆಕಾರ್ಡಿಂಗ್ ಈ ಫೋನ್‌ನಲ್ಲಿ ಉಳಿದಿದೆ';
+
+  @override
+  String get transcriptLabel => 'ಪ್ರತಿಲಿಪಿ';
+
+  @override
+  String get translationLabel => 'ಇಂಗ್ಲಿಷ್ ಅನುವಾದ';
+
+  @override
+  String get confirmedDetails => 'ದೃಢೀಕರಿಸಿದ ವಿವರಗಳು';
+
+  @override
+  String get createdLabel => 'ರಚಿಸಲಾಗಿದೆ';
+
+  @override
+  String get close => 'ಮುಚ್ಚಿ';
+
+  @override
+  String get aiNotVerifiedNotice =>
+      'AI ಸಲಹೆಗಳು ವೈದ್ಯಕೀಯವಾಗಿ ಪರಿಶೀಲಿಸಲ್ಪಟ್ಟಿಲ್ಲ. ದಯವಿಟ್ಟು ಪ್ರತಿಯೊಂದು ವಿವರವನ್ನೂ ಪರಿಶೀಲಿಸಿ.';
 }

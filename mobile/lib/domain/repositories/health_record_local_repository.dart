@@ -310,46 +310,4 @@ class HealthRecordLocalRepository {
     final decoded = jsonDecode(value);
     return decoded is Map<String, dynamic> ? decoded : null;
   }
-
-  // ==========================================================
-  // OLDER API (still used by screens until they move to the above)
-  // ==========================================================
-
-  Future<void> saveHealthRecord({
-    required String id,
-    String? workerId,
-    required String rawInput,
-    String? inputLanguage,
-    String? audioPath,
-  }) async {
-    await database.insertHealthRecord(
-      HealthRecordsCompanion.insert(
-        id: id,
-        clientRecordId: Value(isUuid(id) ? id : generateUuidV4()),
-        workerId: Value(workerId),
-        rawInput: rawInput,
-        inputLanguage: Value(inputLanguage),
-        audioPath: Value(audioPath),
-      ),
-    );
-  }
-
-  Future<List<HealthRecord>> getAllRecords() {
-    return database.getAllHealthRecords();
-  }
-
-  Future<List<HealthRecord>> getPendingRecords() {
-    return database.getPendingHealthRecords();
-  }
-
-  Future<void> markAsSynced(String recordId) => markSynced(recordId);
-
-  Future<void> markAsFailed(String recordId) {
-    return markSyncFailed(
-      id: recordId,
-      reason: SyncError.server,
-      attempts: 1,
-      retryAt: DateTime.now(),
-    );
-  }
 }

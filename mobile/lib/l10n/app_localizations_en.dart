@@ -166,4 +166,129 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusLabel => 'Status';
+
+  @override
+  String get online => 'Online';
+
+  @override
+  String get offline => 'Offline';
+
+  @override
+  String get syncing => 'Syncing…';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get statusSavedOffline => 'Saved offline';
+
+  @override
+  String get statusPendingSync => 'Pending sync';
+
+  @override
+  String get statusUploading => 'Uploading';
+
+  @override
+  String get statusSynced => 'Synced';
+
+  @override
+  String get statusSyncFailed => 'Sync failed – will retry';
+
+  @override
+  String get statusConflict => 'Needs your decision';
+
+  @override
+  String get aiPending => 'AI processing pending (needs internet)';
+
+  @override
+  String get aiCompleted => 'AI processing completed – review needed';
+
+  @override
+  String get aiFailed => 'AI could not process – enter details manually';
+
+  @override
+  String get statusConfirmed => 'Confirmed';
+
+  @override
+  String get savedOfflineAiPending =>
+      'Saved on this phone. AI processing will run when you are back online.';
+
+  @override
+  String get savedAiRetry =>
+      'Saved. AI processing did not finish; it will retry automatically.';
+
+  @override
+  String get loginToSync =>
+      'Your login has expired. Log in again to sync your records.';
+
+  @override
+  String get logInAgain => 'Log in again';
+
+  @override
+  String unsyncedCount(int count) {
+    return '$count not yet synced';
+  }
+
+  @override
+  String logoutUnsyncedWarning(int count) {
+    return '$count records are not yet synced. They stay on this phone and will sync after you log in again.';
+  }
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get recordConfirmedTitle => 'Record confirmed';
+
+  @override
+  String get confirmedSynced =>
+      'The record has been confirmed and saved on the server.';
+
+  @override
+  String get confirmedOffline =>
+      'Confirmed on this phone. It will be sent to the server when you are online.';
+
+  @override
+  String get conflictTitle => 'Different version on the server';
+
+  @override
+  String get conflictBody =>
+      'This record was already confirmed with different details. Nothing has been overwritten.';
+
+  @override
+  String get yourVersion => 'Your version';
+
+  @override
+  String get serverVersion => 'Server version';
+
+  @override
+  String get useServerVersion => 'Use server version';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get recordDetails => 'Record details';
+
+  @override
+  String get audioKeptOnPhone => 'Audio recording kept on this phone';
+
+  @override
+  String get transcriptLabel => 'Transcript';
+
+  @override
+  String get translationLabel => 'English translation';
+
+  @override
+  String get confirmedDetails => 'Confirmed details';
+
+  @override
+  String get createdLabel => 'Created';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get aiNotVerifiedNotice =>
+      'AI suggestions are not medically verified. Please check every field.';
 }

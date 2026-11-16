@@ -169,4 +169,129 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get statusLabel => 'स्थिति';
+
+  @override
+  String get online => 'ऑनलाइन';
+
+  @override
+  String get offline => 'ऑफ़लाइन';
+
+  @override
+  String get syncing => 'सिंक हो रहा है…';
+
+  @override
+  String get syncNow => 'अभी सिंक करें';
+
+  @override
+  String get statusSavedOffline => 'ऑफ़लाइन सहेजा गया';
+
+  @override
+  String get statusPendingSync => 'सिंक बाकी है';
+
+  @override
+  String get statusUploading => 'अपलोड हो रहा है';
+
+  @override
+  String get statusSynced => 'सिंक हो गया';
+
+  @override
+  String get statusSyncFailed => 'सिंक विफल – फिर से प्रयास होगा';
+
+  @override
+  String get statusConflict => 'आपके निर्णय की आवश्यकता है';
+
+  @override
+  String get aiPending => 'AI प्रोसेसिंग बाकी है (इंटरनेट आवश्यक)';
+
+  @override
+  String get aiCompleted => 'AI प्रोसेसिंग पूरी – समीक्षा आवश्यक';
+
+  @override
+  String get aiFailed => 'AI प्रोसेस नहीं कर सका – विवरण स्वयं दर्ज करें';
+
+  @override
+  String get statusConfirmed => 'पुष्टि की गई';
+
+  @override
+  String get savedOfflineAiPending =>
+      'इस फ़ोन पर सहेजा गया। ऑनलाइन होने पर AI प्रोसेसिंग होगी।';
+
+  @override
+  String get savedAiRetry =>
+      'सहेजा गया। AI प्रोसेसिंग पूरी नहीं हुई; यह अपने आप फिर से प्रयास करेगा।';
+
+  @override
+  String get loginToSync =>
+      'आपका लॉगिन समाप्त हो गया है। रिकॉर्ड सिंक करने के लिए फिर से लॉगिन करें।';
+
+  @override
+  String get logInAgain => 'फिर से लॉगिन करें';
+
+  @override
+  String unsyncedCount(int count) {
+    return '$count अभी सिंक नहीं हुए';
+  }
+
+  @override
+  String logoutUnsyncedWarning(int count) {
+    return '$count रिकॉर्ड अभी सिंक नहीं हुए हैं। वे इस फ़ोन पर रहेंगे और दोबारा लॉगिन करने पर सिंक होंगे।';
+  }
+
+  @override
+  String get cancel => 'रद्द करें';
+
+  @override
+  String get recordConfirmedTitle => 'रिकॉर्ड की पुष्टि हुई';
+
+  @override
+  String get confirmedSynced =>
+      'रिकॉर्ड की पुष्टि हो गई है और सर्वर पर सहेजा गया है।';
+
+  @override
+  String get confirmedOffline =>
+      'इस फ़ोन पर पुष्टि की गई। ऑनलाइन होने पर इसे सर्वर पर भेजा जाएगा।';
+
+  @override
+  String get conflictTitle => 'सर्वर पर अलग संस्करण';
+
+  @override
+  String get conflictBody =>
+      'इस रिकॉर्ड की पहले ही अलग विवरणों के साथ पुष्टि हो चुकी है। कुछ भी अधिलेखित नहीं किया गया है।';
+
+  @override
+  String get yourVersion => 'आपका संस्करण';
+
+  @override
+  String get serverVersion => 'सर्वर संस्करण';
+
+  @override
+  String get useServerVersion => 'सर्वर संस्करण उपयोग करें';
+
+  @override
+  String get later => 'बाद में';
+
+  @override
+  String get recordDetails => 'रिकॉर्ड विवरण';
+
+  @override
+  String get audioKeptOnPhone => 'ऑडियो रिकॉर्डिंग इस फ़ोन पर सुरक्षित है';
+
+  @override
+  String get transcriptLabel => 'प्रतिलेख';
+
+  @override
+  String get translationLabel => 'अंग्रेज़ी अनुवाद';
+
+  @override
+  String get confirmedDetails => 'पुष्टि किए गए विवरण';
+
+  @override
+  String get createdLabel => 'बनाया गया';
+
+  @override
+  String get close => 'बंद करें';
+
+  @override
+  String get aiNotVerifiedNotice =>
+      'AI सुझाव चिकित्सकीय रूप से सत्यापित नहीं हैं। कृपया हर जानकारी जाँचें।';
 }

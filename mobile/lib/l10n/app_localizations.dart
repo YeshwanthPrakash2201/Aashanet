@@ -405,6 +405,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Status'**
   String get statusLabel;
+
+  /// No description provided for @online.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get online;
+
+  /// No description provided for @offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get offline;
+
+  /// No description provided for @syncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncing;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @statusSavedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved offline'**
+  String get statusSavedOffline;
+
+  /// No description provided for @statusPendingSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending sync'**
+  String get statusPendingSync;
+
+  /// No description provided for @statusUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get statusUploading;
+
+  /// No description provided for @statusSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get statusSynced;
+
+  /// No description provided for @statusSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed – will retry'**
+  String get statusSyncFailed;
+
+  /// No description provided for @statusConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs your decision'**
+  String get statusConflict;
+
+  /// No description provided for @aiPending.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing pending (needs internet)'**
+  String get aiPending;
+
+  /// No description provided for @aiCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing completed – review needed'**
+  String get aiCompleted;
+
+  /// No description provided for @aiFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI could not process – enter details manually'**
+  String get aiFailed;
+
+  /// No description provided for @statusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get statusConfirmed;
+
+  /// No description provided for @savedOfflineAiPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this phone. AI processing will run when you are back online.'**
+  String get savedOfflineAiPending;
+
+  /// No description provided for @savedAiRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. AI processing did not finish; it will retry automatically.'**
+  String get savedAiRetry;
+
+  /// No description provided for @loginToSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Your login has expired. Log in again to sync your records.'**
+  String get loginToSync;
+
+  /// No description provided for @logInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in again'**
+  String get logInAgain;
+
+  /// No description provided for @unsyncedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} not yet synced'**
+  String unsyncedCount(int count);
+
+  /// No description provided for @logoutUnsyncedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} records are not yet synced. They stay on this phone and will sync after you log in again.'**
+  String logoutUnsyncedWarning(int count);
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @recordConfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record confirmed'**
+  String get recordConfirmedTitle;
+
+  /// No description provided for @confirmedSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'The record has been confirmed and saved on the server.'**
+  String get confirmedSynced;
+
+  /// No description provided for @confirmedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed on this phone. It will be sent to the server when you are online.'**
+  String get confirmedOffline;
+
+  /// No description provided for @conflictTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Different version on the server'**
+  String get conflictTitle;
+
+  /// No description provided for @conflictBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This record was already confirmed with different details. Nothing has been overwritten.'**
+  String get conflictBody;
+
+  /// No description provided for @yourVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Your version'**
+  String get yourVersion;
+
+  /// No description provided for @serverVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Server version'**
+  String get serverVersion;
+
+  /// No description provided for @useServerVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Use server version'**
+  String get useServerVersion;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @recordDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Record details'**
+  String get recordDetails;
+
+  /// No description provided for @audioKeptOnPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio recording kept on this phone'**
+  String get audioKeptOnPhone;
+
+  /// No description provided for @transcriptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcript'**
+  String get transcriptLabel;
+
+  /// No description provided for @translationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'English translation'**
+  String get translationLabel;
+
+  /// No description provided for @confirmedDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed details'**
+  String get confirmedDetails;
+
+  /// No description provided for @createdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get createdLabel;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @aiNotVerifiedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggestions are not medically verified. Please check every field.'**
+  String get aiNotVerifiedNotice;
 }
 
 class _AppLocalizationsDelegate

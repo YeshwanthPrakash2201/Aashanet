@@ -18,7 +18,6 @@
   "kannada": "Kannada",
   "hindi": "Hindi",
   "continueText": "Continue",
-
   "usernameHint": "Enter your username",
   "passwordHint": "Enter your password",
   "loginSubtitle": "AI-Powered Voice-Based Health Assistant",
@@ -26,7 +25,6 @@
   "enterUsernamePassword": "Please enter username and password",
   "loginFailed": "Login failed",
   "couldNotConnectServer": "Could not connect to server",
-
   "recordHealthVisit": "Record Health Visit",
   "captureHealthInformation": "Capture Health Information",
   "captureHealthDescription": "Enter health information naturally. AASHANet AI will analyze it and create a health record.",
@@ -51,5 +49,57 @@
   "noLocalHealthRecords": "No local health records yet.",
   "workerLabel": "Worker",
   "notAssignedYet": "Not assigned yet",
-  "statusLabel": "Status"
+  "statusLabel": "Status",
+  "online": "Online",
+  "offline": "Offline",
+  "syncing": "Syncing…",
+  "syncNow": "Sync now",
+  "statusSavedOffline": "Saved offline",
+  "statusPendingSync": "Pending sync",
+  "statusUploading": "Uploading",
+  "statusSynced": "Synced",
+  "statusSyncFailed": "Sync failed – will retry",
+  "statusConflict": "Needs your decision",
+  "aiPending": "AI processing pending (needs internet)",
+  "aiCompleted": "AI processing completed – review needed",
+  "aiFailed": "AI could not process – enter details manually",
+  "statusConfirmed": "Confirmed",
+  "savedOfflineAiPending": "Saved on this phone. AI processing will run when you are back online.",
+  "savedAiRetry": "Saved. AI processing did not finish; it will retry automatically.",
+  "loginToSync": "Your login has expired. Log in again to sync your records.",
+  "logInAgain": "Log in again",
+  "unsyncedCount": "{count} not yet synced",
+  "@unsyncedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "logoutUnsyncedWarning": "{count} records are not yet synced. They stay on this phone and will sync after you log in again.",
+  "@logoutUnsyncedWarning": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "recordConfirmedTitle": "Record confirmed",
+  "confirmedSynced": "The record has been confirmed and saved on the server.",
+  "confirmedOffline": "Confirmed on this phone. It will be sent to the server when you are online.",
+  "conflictTitle": "Different version on the server",
+  "conflictBody": "This record was already confirmed with different details. Nothing has been overwritten.",
+  "yourVersion": "Your version",
+  "serverVersion": "Server version",
+  "useServerVersion": "Use server version",
+  "later": "Later",
+  "recordDetails": "Record details",
+  "audioKeptOnPhone": "Audio recording kept on this phone",
+  "transcriptLabel": "Transcript",
+  "translationLabel": "English translation",
+  "confirmedDetails": "Confirmed details",
+  "createdLabel": "Created",
+  "close": "Close",
+  "aiNotVerifiedNotice": "AI suggestions are not medically verified. Please check every field."
 }

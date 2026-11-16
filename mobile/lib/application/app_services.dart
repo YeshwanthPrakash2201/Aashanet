@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../config.dart';
 import '../domain/repositories/health_record_local_repository.dart';
 import '../infrastructure/api/api_client.dart';
@@ -11,6 +13,16 @@ import 'sync_service.dart';
 /// by every screen.
 class AppServices {
   AppServices._({
+    required this.username,
+    required this.records,
+    required this.api,
+    required this.connectivity,
+    required this.sync,
+  });
+
+  /// For widget tests: services built from test doubles.
+  @visibleForTesting
+  AppServices.forTesting({
     required this.username,
     required this.records,
     required this.api,
