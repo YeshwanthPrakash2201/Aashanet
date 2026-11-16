@@ -16,6 +16,8 @@ import 'domain/record_status.dart';
 import 'infrastructure/database/app_database.dart';
 import 'presentation/review_data.dart';
 import 'presentation/screens/local_records_screen.dart';
+import 'presentation/theme/app_theme.dart';
+import 'presentation/widgets/design.dart';
 import 'presentation/widgets/sync_status_widgets.dart';
 
 void main() async {
@@ -74,11 +76,8 @@ class _AashaNetAppState extends State<AashaNetApp> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'AASHANet AI',
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        theme: AppTheme.light(),
+        home: const BrandedLoader(),
       );
     }
 
@@ -102,10 +101,7 @@ class _AashaNetAppState extends State<AashaNetApp> {
         Locale('hi'),
       ],
 
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.teal,
-      ),
+      theme: AppTheme.light(),
 
       home: _selectedLocale == null
           ? LanguageSelectionScreen(
@@ -203,11 +199,7 @@ class StartupScreen extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState ==
             ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
+          return const BrandedLoader();
         }
 
         if (snapshot.hasError) {
@@ -384,166 +376,184 @@ class _LoginScreenState
 
   @override
   Widget build(BuildContext context) {
-    final l10n =
-        AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
+    final wide = MediaQuery.sizeOf(context).width >= Breakpoints.desktop;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration:
-                      BoxDecoration(
-                    color: Colors.teal,
-                    borderRadius:
-                        BorderRadius.circular(
-                      20,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.health_and_safety,
-                    color: Colors.white,
-                    size: 55,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  'AASHANet AI',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  l10n.loginSubtitle,
-                  textAlign:
-                      TextAlign.center,
-                ),
-
-                const SizedBox(height: 40),
-
-                TextField(
-                  controller:
-                      usernameController,
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        l10n.username,
-                    hintText:
-                        l10n.usernameHint,
-                    prefixIcon:
-                        const Icon(
-                      Icons.person,
-                    ),
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        12,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller:
-                      passwordController,
-                  obscureText:
-                      obscurePassword,
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        l10n.password,
-                    hintText:
-                        l10n.passwordHint,
-                    prefixIcon:
-                        const Icon(
-                      Icons.lock,
-                    ),
-                    suffixIcon:
-                        IconButton(
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility
-                            : Icons
-                                .visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          obscurePassword =
-                              !obscurePassword;
-                        });
-                      },
-                    ),
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        12,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                SizedBox(
-                  width:
-                      double.infinity,
-                  height: 52,
-                  child:
-                      ElevatedButton(
-                    onPressed:
-                        isLoading
-                            ? null
-                            : login,
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child:
-                                CircularProgressIndicator(),
-                          )
-                        : Text(
-                            l10n.login,
-                            style:
-                                const TextStyle(
-                              fontSize:
-                                  17,
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                            ),
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                Text(
-                  l10n.loginSupportText,
-                  textAlign:
-                      TextAlign.center,
-                ),
-              ],
-            ),
+    final intro = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const BrandMark(size: 64, onDark: true),
+        const SizedBox(height: 28),
+        Text(
+          'AASHANet AI',
+          style: textTheme.displaySmall?.copyWith(color: Colors.white),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.loginSubtitle,
+          style: textTheme.titleMedium?.copyWith(
+            color: Colors.white.withValues(alpha: 0.88),
+            fontWeight: FontWeight.w600,
           ),
+        ),
+        const SizedBox(height: 22),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.volunteer_activism_rounded,
+              color: AppColors.marigold,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.loginSupportText,
+                style: textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.78),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final form = SurfaceCard(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.welcome,
+              style: textTheme.headlineSmall?.copyWith(
+                color: AppColors.forest,
+              ),
+            ),
+            const SizedBox(height: 22),
+            TextField(
+              controller: usernameController,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.username],
+              decoration: InputDecoration(
+                labelText: l10n.username,
+                hintText: l10n.usernameHint,
+                prefixIcon: const Icon(Icons.person_outline_rounded),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: passwordController,
+              obscureText: obscurePassword,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.password],
+              onSubmitted: (_) {
+                if (!isLoading) {
+                  login();
+                }
+              },
+              decoration: InputDecoration(
+                labelText: l10n.password,
+                hintText: l10n.passwordHint,
+                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    obscurePassword
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      obscurePassword = !obscurePassword;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 26),
+            GradientButton(
+              label: l10n.login,
+              icon: Icons.login_rounded,
+              loading: isLoading,
+              onPressed: isLoading ? null : login,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Desktop / large tablet: brand panel beside the form.
+    if (wide) {
+      return Scaffold(
+        body: Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: HeroSurface(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: FadeSlideIn(child: intro),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 4,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: FadeSlideIn(
+                      delay: const Duration(milliseconds: 150),
+                      child: form,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Phone / tablet: brand on top, form card overlapping it.
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            HeroSurface(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(AppRadii.xl),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: ResponsiveCenter(
+                  maxWidth: 520,
+                  padding: const EdgeInsets.fromLTRB(28, 36, 28, 96),
+                  child: FadeSlideIn(
+                    child: SizedBox(width: double.infinity, child: intro),
+                  ),
+                ),
+              ),
+            ),
+            Transform.translate(
+              offset: const Offset(0, -64),
+              child: ResponsiveCenter(
+                maxWidth: 520,
+                child: FadeSlideIn(
+                  delay: const Duration(milliseconds: 150),
+                  child: form,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -561,12 +571,16 @@ class HomeScreen extends StatefulWidget {
     required this.role,
     required this.fullName,
     required this.accessToken,
+    @visibleForTesting this.servicesForTesting,
   });
 
   final String username;
   final String role;
   final String fullName;
   final String accessToken;
+
+  /// Lets widget tests supply services built from test doubles.
+  final AppServices? servicesForTesting;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -584,7 +598,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _startServices() async {
-    final services = await AppServices.startFor(widget.username);
+    final services = widget.servicesForTesting ??
+        await AppServices.startFor(widget.username);
 
     if (mounted) {
       setState(() {
@@ -614,12 +629,13 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _openRecordScreen() {
+  void _openRecordScreen({bool focusTyping = false}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => RecordScreen(
           accessToken: widget.accessToken,
+          focusTyping: focusTyping,
         ),
       ),
     );
@@ -687,141 +703,479 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _menuButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback? onPressed,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: SizedBox(
-        width: double.infinity,
-        height: 60,
-        child: ElevatedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          label: Text(
-            label,
-            style: const TextStyle(fontSize: 17),
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final services = _services;
+    final wide = MediaQuery.sizeOf(context).width >= Breakpoints.tablet;
+
+    final tiles = [
+      ActionTile(
+        icon: Icons.folder_open_rounded,
+        title: l10n.dataShowing,
+        subtitle: l10n.localHealthRecords,
+        vertical: wide,
+        onTap: services == null
+            ? null
+            : () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LocalRecordsScreen(
+                      services: services,
+                      onReview: _openReview,
+                    ),
+                  ),
+                ),
+      ),
+      ActionTile(
+        icon: Icons.keyboard_alt_outlined,
+        title: l10n.typingOption,
+        subtitle: l10n.enterRecordByTyping,
+        color: AppColors.info,
+        background: AppColors.infoMist,
+        vertical: wide,
+        onTap: services != null
+            ? () => _openRecordScreen(focusTyping: true)
+            : null,
+      ),
+      ActionTile(
+        icon: Icons.task_alt_rounded,
+        title: l10n.tasks,
+        color: AppColors.saffron,
+        background: AppColors.marigoldMist,
+        vertical: wide,
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tasks feature coming next'),
+            ),
+          );
+        },
+      ),
+    ];
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildHero(context, services)),
+          if (services != null)
+            SliverToBoxAdapter(
+              child: ResponsiveCenter(
+                maxWidth: 1080,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                  child: LoginRequiredBanner(
+                    services: services,
+                    onLogInAgain: () => _logout(loginExpired: true),
+                  ),
+                ),
+              ),
+            ),
+          SliverToBoxAdapter(
+            child: ResponsiveCenter(
+              maxWidth: 1080,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 120),
+                    child: _RecordCallToAction(
+                      title: l10n.record,
+                      subtitle: l10n.tapToRecordVoice,
+                      onTap: services != null ? _openRecordScreen : null,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (wide)
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (var i = 0; i < tiles.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 16),
+                            Expanded(
+                              child: FadeSlideIn(
+                                delay: Duration(milliseconds: 200 + 80 * i),
+                                child: tiles[i],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    )
+                  else
+                    for (var i = 0; i < tiles.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: FadeSlideIn(
+                          delay: Duration(milliseconds: 200 + 80 * i),
+                          child: tiles[i],
+                        ),
+                      ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHero(BuildContext context, AppServices? services) {
+    final l10n = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return HeroSurface(
+      borderRadius: const BorderRadius.vertical(
+        bottom: Radius.circular(AppRadii.xl),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: ResponsiveCenter(
+          maxWidth: 1080,
+          padding: const EdgeInsets.fromLTRB(20, 12, 12, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar: brand, connection status, logout.
+              Row(
+                children: [
+                  const BrandMark(size: 40, onDark: true),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'AASHANet AI',
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  if (services != null)
+                    ConnectionStatusBadge(services: services, onDark: true),
+                  IconButton(
+                    tooltip: l10n.logout,
+                    icon: const Icon(Icons.logout_rounded),
+                    color: Colors.white,
+                    onPressed: _logout,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 26),
+              FadeSlideIn(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.welcome,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: AppColors.marigold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.fullName,
+                        style: textTheme.headlineMedium?.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(40),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.badge_outlined,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${l10n.role}: ${widget.role}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (services != null) ...[
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _HomeSummary(services: services),
+                ),
+              ],
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+// ------------------------------------------------------------
+// Home: large voice-record call to action
+// ------------------------------------------------------------
+
+class _RecordCallToAction extends StatelessWidget {
+  const _RecordCallToAction({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Pressable(
+      onTap: onTap,
+      semanticLabel: title,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppColors.actionGradient,
+          borderRadius: BorderRadius.circular(AppRadii.lg),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.saffron.withValues(alpha: 0.32),
+              blurRadius: 26,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadii.lg),
+          child: Stack(
+            children: [
+              const Positioned.fill(
+                child: CustomPaint(
+                  painter: KolamPainter(opacity: 0.16, spacing: 26),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 76,
+                      height: 76,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.mic_rounded,
+                        color: AppColors.saffron,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+// Home: live summary of this worker's records on the phone
+// ------------------------------------------------------------
+
+class _HomeSummary extends StatelessWidget {
+  const _HomeSummary({required this.services});
+
+  final AppServices services;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final services = _services;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('AASHANet AI'),
-        centerTitle: true,
-        actions: [
-          if (services != null) ConnectionStatusBadge(services: services),
-          IconButton(
-            tooltip: l10n.logout,
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (services != null)
-            LoginRequiredBanner(
-              services: services,
-              onLogInAgain: () => _logout(loginExpired: true),
-            ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.welcome,
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.fullName,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${l10n.role}: ${widget.role}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  if (services != null)
-                    StreamBuilder<int>(
-                      stream: services.records
-                          .watchUnsyncedCount(services.username),
-                      builder: (context, snapshot) {
-                        final count = snapshot.data ?? 0;
+    return StreamBuilder<List<HealthRecord>>(
+      stream: services.records.watchRecordsForOwner(services.username),
+      builder: (context, snapshot) {
+        final records = snapshot.data ?? const <HealthRecord>[];
 
-                        if (count == 0) {
-                          return const SizedBox.shrink();
-                        }
+        final awaitingReview = records
+            .where(
+              (r) =>
+                  r.recordStatus == RecordStatus.draft &&
+                  (r.aiStatus == AiStatus.completed ||
+                      r.aiStatus == AiStatus.failed),
+            )
+            .length;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.cloud_upload_outlined,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(l10n.unsyncedCount(count)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  const SizedBox(height: 30),
-                  _menuButton(
-                    icon: Icons.note_add,
-                    label: l10n.record,
-                    onPressed: services != null ? _openRecordScreen : null,
-                  ),
-                  _menuButton(
-                    icon: Icons.folder_open,
-                    label: l10n.dataShowing,
-                    onPressed: services == null
-                        ? null
-                        : () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LocalRecordsScreen(
-                                  services: services,
-                                  onReview: _openReview,
-                                ),
-                              ),
-                            ),
-                  ),
-                  _menuButton(
-                    icon: Icons.keyboard,
-                    label: l10n.typingOption,
-                    onPressed: services != null ? _openRecordScreen : null,
-                  ),
-                  _menuButton(
-                    icon: Icons.task_alt,
-                    label: l10n.tasks,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tasks feature coming next'),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+        final notSynced = records
+            .where(
+              (r) =>
+                  r.syncStatus != SyncStatus.synced,
+            )
+            .length;
+
+        return Row(
+          children: [
+            Expanded(
+              child: _SummaryStat(
+                value: records.length,
+                label: l10n.statRecordsSaved,
+                icon: Icons.inventory_2_outlined,
               ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SummaryStat(
+                value: awaitingReview,
+                label: l10n.statAwaitingReview,
+                icon: Icons.rate_review_outlined,
+                highlight: awaitingReview > 0,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SummaryStat(
+                value: notSynced,
+                label: l10n.statNotSynced,
+                icon: Icons.cloud_upload_outlined,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SummaryStat extends StatelessWidget {
+  const _SummaryStat({
+    required this.value,
+    required this.label,
+    required this.icon,
+    this.highlight = false,
+  });
+
+  final int value;
+  final String label;
+  final IconData icon;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: highlight
+            ? AppColors.marigold.withValues(alpha: 0.22)
+            : Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(
+          color: highlight
+              ? AppColors.marigold.withValues(alpha: 0.6)
+              : Colors.white.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: highlight ? AppColors.marigold : Colors.white70,
+          ),
+          const SizedBox(height: 8),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: value.toDouble()),
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeOutCubic,
+            builder: (context, v, _) => Text(
+              v.round().toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                height: 1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.82),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
             ),
           ),
         ],
@@ -838,9 +1192,13 @@ class RecordScreen extends StatefulWidget {
   const RecordScreen({
     super.key,
     required this.accessToken,
+    this.focusTyping = false,
   });
 
   final String accessToken;
+
+  /// Opened from "Typing Option": put the cursor in the text box.
+  final bool focusTyping;
 
   @override
   State<RecordScreen> createState() =>
@@ -1083,161 +1441,199 @@ class _RecordScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.recordHealthVisit,
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding:
-            const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.captureHealthInformation,
-              style: const TextStyle(
-                fontSize: 23,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.captureHealthDescription,
-            ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 100,
-              child:
-                  OutlinedButton(
-                onPressed:
-                    isProcessing
-                        ? null
-                        : toggleRecording,
-                child: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
-                  children: [
-                    Icon(
-                      _isRecording
-                          ? Icons
-                              .stop_circle
-                          : Icons.mic,
-                      size: 40,
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    Text(
-                      _isRecording
-                          ? l10n.tapToStopRecording
-                          : l10n.tapToRecordVoice,
-                      style:
-                          const TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight
-                                .bold,
+    final textTheme = Theme.of(context).textTheme;
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+
+    final voicePanel = SurfaceCard(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: Column(
+        children: [
+          PulsingMicButton(
+            isRecording: _isRecording,
+            onPressed: isProcessing ? null : toggleRecording,
+            size: 128,
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: _isRecording
+                ? Column(
+                    key: const ValueKey('recording'),
+                    children: [
+                      ElapsedTimer(
+                        running: true,
+                        style: textTheme.headlineMedium?.copyWith(
+                          color: AppColors.saffron,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
                       ),
-                    ),
-                    if (_isRecording) ...[
-                      const SizedBox(
-                        height: 4,
-                      ),
+                      const SizedBox(height: 2),
                       Text(
                         l10n.recording,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: AppColors.saffron,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
-                    if (!_isRecording &&
-                        _audioPath !=
-                            null) ...[
-                      const SizedBox(
-                        height: 4,
+                  )
+                : _audioPath != null
+                    ? Container(
+                        key: const ValueKey('saved'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.successMist,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: AppColors.success,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.recordingSaved,
+                              style: const TextStyle(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : const SizedBox(key: ValueKey('idle'), height: 4),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _isRecording ? l10n.tapToStopRecording : l10n.tapToRecordVoice,
+            textAlign: TextAlign.center,
+            style: textTheme.titleMedium?.copyWith(color: AppColors.forest),
+          ),
+        ],
+      ),
+    );
+
+    final typingPanel = SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SectionLabel(l10n.enterRecordByTyping, icon: Icons.edit_note_rounded),
+          const SizedBox(height: 14),
+          TextField(
+            controller: rawRecordController,
+            autofocus: widget.focusTyping,
+            minLines: 6,
+            maxLines: 10,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+              hintText: l10n.recordExampleHint,
+              fillColor: AppColors.cream,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.recordHealthVisit),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: ResponsiveCenter(
+          maxWidth: 1080,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.captureHealthInformation,
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: AppColors.forest,
                       ),
-                     Text(
-                        l10n.recordingSaved,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.captureHealthDescription,
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: AppColors.inkMuted,
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text(l10n.orText),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller:
-                  rawRecordController,
-              maxLines: 8,
-              decoration:
-                  InputDecoration(
-                labelText:
-                    l10n.enterRecordByTyping,
-                hintText:
-                    l10n.recordExampleHint,
-                alignLabelWithHint: true,
-                prefixIcon:
-                    const Padding(
-                  padding:
-                      EdgeInsets.only(
-                    bottom: 110,
-                  ),
-                  child: Icon(
-                    Icons.edit_note,
-                  ),
-                ),
-                border:
-                    OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(
-                    12,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 55,
-              child:
-                  ElevatedButton.icon(
-                onPressed:
-                    isProcessing
-                        ? null
-                        : processRecord,
-                icon: isProcessing
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child:
-                            CircularProgressIndicator(),
-                      )
-                    : const Icon(
-                        Icons.auto_awesome,
+              const SizedBox(height: 22),
+              if (wide)
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: FadeSlideIn(
+                          delay: const Duration(milliseconds: 100),
+                          child: voicePanel,
+                        ),
                       ),
-                label: Text(
-                  isProcessing
-                      ? l10n.analyzingRecord
-                      : 	l10n.processRecord,
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
-                    fontWeight:
-                        FontWeight.bold,
+                      SizedBox(
+                        width: 64,
+                        child: Center(
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: AppColors.sand,
+                            child: Text(
+                              l10n.orText,
+                              style: textTheme.labelLarge?.copyWith(
+                                color: AppColors.inkMuted,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: FadeSlideIn(
+                          delay: const Duration(milliseconds: 180),
+                          child: typingPanel,
+                        ),
+                      ),
+                    ],
                   ),
+                )
+              else ...[
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 100),
+                  child: voicePanel,
                 ),
-              ),
-            ),
-          ],
+                const SizedBox(height: 18),
+                OrDivider(l10n.orText),
+                const SizedBox(height: 18),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 180),
+                  child: typingPanel,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: ResponsiveCenter(
+          maxWidth: 1080,
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: GradientButton(
+            label: isProcessing ? l10n.analyzingRecord : l10n.processRecord,
+            icon: Icons.auto_awesome_rounded,
+            loading: isProcessing,
+            onPressed: isProcessing ? null : processRecord,
+          ),
         ),
       ),
     );
@@ -1520,217 +1916,190 @@ class ReviewRecordScreen
                 ?.toString() ??
             '';
 
+    final textTheme = Theme.of(context).textTheme;
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'AI Extracted Information',
+          style: textTheme.headlineSmall?.copyWith(color: AppColors.forest),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Review and edit the information '
+          'extracted by AASHANet AI before saving.',
+          style: textTheme.bodyLarge?.copyWith(color: AppColors.inkMuted),
+        ),
+        const SizedBox(height: 16),
+        Callout(
+          icon: Icons.health_and_safety_outlined,
+          child: Text(l10n.aiNotVerifiedNotice),
+        ),
+      ],
+    );
+
+    final originalCard = SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionLabel(
+            'Original Record',
+            icon: Icons.format_quote_rounded,
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: AppColors.cream,
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+              border: const Border(
+                left: BorderSide(color: AppColors.marigold, width: 4),
+              ),
+            ),
+            child: Text(
+              rawRecord,
+              style: textTheme.bodyLarge?.copyWith(color: AppColors.ink),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final statusCard = Callout(
+      icon: Icons.auto_awesome_rounded,
+      color: AppColors.teal,
+      background: AppColors.tealMist,
+      child: Text(
+        'AI status: $aiStatus\n'
+        'Record status: '
+        '$recordStatus\n\n'
+        'Please verify the information '
+        'before confirming the record.',
+      ),
+    );
+
+    final formCard = SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SectionLabel(
+            'AI Suggested Data',
+            icon: Icons.auto_awesome_rounded,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: patientNameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(
+              labelText: 'Beneficiary Name',
+              prefixIcon: Icon(Icons.person_outline_rounded),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: ageController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Age',
+              prefixIcon: Icon(Icons.cake_outlined),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: symptomsController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Symptoms',
+              hintText: 'Separate multiple symptoms with commas',
+              prefixIcon: Icon(Icons.medical_information_outlined),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: durationController,
+            decoration: const InputDecoration(
+              labelText: 'Duration',
+              prefixIcon: Icon(Icons.timer_outlined),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          l10n.reviewExtractedInformation,
-        ),
+        title: Text(l10n.reviewExtractedInformation),
       ),
       body: SingleChildScrollView(
-        padding:
-            const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'AI Extracted Information',
-              style: TextStyle(
-                fontSize: 23,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Review and edit the information '
-              'extracted by AASHANet AI before saving.',
-            ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              l10n.aiNotVerifiedNotice,
-              style: TextStyle(
-                color: Colors.orange.shade900,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 25),
-            const Text(
-              'Original Record',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width:
-                  double.infinity,
-              padding:
-                  const EdgeInsets.all(15),
-              decoration:
-                  BoxDecoration(
-                border:
-                    Border.all(
-                  color: Colors.grey,
-                ),
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
-              ),
-              child: Text(
-                rawRecord,
-              ),
-            ),
-            const SizedBox(height: 25),
-            const Text(
-              'AI Suggested Data',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller:
-                  patientNameController,
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Beneficiary Name',
-                prefixIcon:
-                    Icon(Icons.person),
-                border:
-                    OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller:
-                  ageController,
-              keyboardType:
-                  TextInputType.number,
-              decoration:
-                  const InputDecoration(
-                labelText: 'Age',
-                prefixIcon:
-                    Icon(
-                  Icons.calendar_today,
-                ),
-                border:
-                    OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller:
-                  symptomsController,
-              maxLines: 3,
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Symptoms',
-                hintText:
-                    'Separate multiple symptoms with commas',
-                prefixIcon:
-                    Icon(
-                  Icons.medical_information,
-                ),
-                border:
-                    OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller:
-                  durationController,
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Duration',
-                prefixIcon:
-                    Icon(Icons.timer),
-                border:
-                    OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              width:
-                  double.infinity,
-              padding:
-                  const EdgeInsets.all(15),
-              decoration:
-                  BoxDecoration(
-                color:
-                    Colors.teal.withValues(
-                  alpha: 0.1,
-                ),
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.auto_awesome,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Expanded(
-                    child: Text(
-                      'AI status: $aiStatus\n'
-                      'Record status: '
-                      '$recordStatus\n\n'
-                      'Please verify the information '
-                      'before confirming the record.',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width:
-                  double.infinity,
-              height: 55,
-              child:
-                  ElevatedButton.icon(
-                onPressed:
-                    isSaving
-                        ? null
-                        : confirmRecord,
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child:
-                            CircularProgressIndicator(),
-                      )
-                    : const Icon(
-                        Icons.check_circle,
+        padding: const EdgeInsets.only(bottom: 24),
+        child: ResponsiveCenter(
+          maxWidth: 1080,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FadeSlideIn(child: header),
+              const SizedBox(height: 20),
+              if (wide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: FadeSlideIn(
+                        delay: const Duration(milliseconds: 100),
+                        child: Column(
+                          children: [
+                            originalCard,
+                            const SizedBox(height: 16),
+                            statusCard,
+                          ],
+                        ),
                       ),
-                label: Text(
-                  isSaving
-                      ? 'Saving...'
-                      : 'Confirm & Save',
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: FadeSlideIn(
+                        delay: const Duration(milliseconds: 180),
+                        child: formCard,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 100),
+                  child: originalCard,
                 ),
-              ),
-            ),
-          ],
+                const SizedBox(height: 16),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 160),
+                  child: formCard,
+                ),
+                const SizedBox(height: 16),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 220),
+                  child: statusCard,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: ResponsiveCenter(
+          maxWidth: 1080,
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: GradientButton(
+            label: isSaving ? 'Saving...' : 'Confirm & Save',
+            icon: Icons.check_circle_rounded,
+            loading: isSaving,
+            onPressed: isSaving ? null : confirmRecord,
+          ),
         ),
       ),
     );

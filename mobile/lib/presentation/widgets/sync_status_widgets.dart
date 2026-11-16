@@ -5,6 +5,7 @@ import '../../application/sync_service.dart';
 import '../../domain/record_status.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 // ============================================================
 // ONLINE / OFFLINE BADGE (app bar)
@@ -12,9 +13,16 @@ import '../../l10n/app_localizations.dart';
 
 /// Shows Online / Offline / Syncing for the current user's services.
 class ConnectionStatusBadge extends StatelessWidget {
-  const ConnectionStatusBadge({super.key, required this.services});
+  const ConnectionStatusBadge({
+    super.key,
+    required this.services,
+    this.onDark = false,
+  });
 
   final AppServices services;
+
+  /// Glass style for use on the dark hero header.
+  final bool onDark;
 
   @override
   Widget build(BuildContext context) {
@@ -29,26 +37,135 @@ class ConnectionStatusBadge extends StatelessWidget {
             final syncing = online && activity == SyncActivity.syncing;
 
             final (icon, label, color) = syncing
-                ? (Icons.sync, l10n.syncing, Colors.blue.shade700)
+                ? (Icons.sync_rounded, l10n.syncing, AppColors.info)
                 : online
-                    ? (Icons.cloud_done, l10n.online, Colors.green.shade700)
-                    : (Icons.cloud_off, l10n.offline, Colors.grey.shade700);
+                    ? (Icons.cloud_done_rounded, l10n.online, AppColors.success)
+                    : (Icons.cloud_off_rounded, l10n.offline, AppColors.idle);
+
+            final dotColor = onDark
+                ? (syncing
+                    ? const Color(0xFF8FC0FF)
+                    : online
+                        ? const Color(0xFF6EE7A8)
+                        : Colors.white54)
+                : color;
 
             return Semantics(
               label: label,
+              liveRegion: true,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Chip(
-                  avatar: Icon(icon, size: 18, color: color),
-                  label: Text(label),
-                  visualDensity: VisualDensity.compact,
-                  side: BorderSide(color: color.withValues(alpha: 0.4)),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: onDark
+                        ? Colors.white.withValues(alpha: 0.14)
+                        : color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(40),
+                    border: Border.all(
+                      color: onDark
+                          ? Colors.white.withValues(alpha: 0.22)
+                          : color.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _StatusDot(color: dotColor, pulsing: syncing),
+                      const SizedBox(width: 8),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: Row(
+                          key: ValueKey(label),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              icon,
+                              size: 16,
+                              color: onDark ? Colors.white : color,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                color: onDark ? Colors.white : color,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _StatusDot extends StatefulWidget {
+  const _StatusDot({required this.color, required this.pulsing});
+
+  final Color color;
+  final bool pulsing;
+
+  @override
+  State<_StatusDot> createState() => _StatusDotState();
+}
+
+class _StatusDotState extends State<_StatusDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_StatusDot old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  void _sync() {
+    if (widget.pulsing && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.pulsing && _controller.isAnimating) {
+      _controller
+        ..stop()
+        ..value = 1;
+    } else if (!widget.pulsing) {
+      _controller.value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween(begin: 0.35, end: 1.0).animate(_controller),
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+      ),
     );
   }
 }
@@ -135,6 +252,16 @@ String aiStatusLabel(AppLocalizations l10n, HealthRecord record) {
   }
 }
 
+/// Colour that represents a record's sync state (used for the list's
+/// accent rail and the sync chip).
+Color syncColorFor(HealthRecord record) => switch (record.syncStatus) {
+      SyncStatus.synced => AppColors.success,
+      SyncStatus.uploading => AppColors.info,
+      SyncStatus.syncFailed => AppColors.warning,
+      SyncStatus.conflict => AppColors.danger,
+      _ => AppColors.idle,
+    };
+
 class RecordStatusChips extends StatelessWidget {
   const RecordStatusChips({
     super.key,
@@ -149,43 +276,77 @@ class RecordStatusChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final (syncIcon, syncColor) = switch (record.syncStatus) {
-      SyncStatus.synced => (Icons.cloud_done, Colors.green.shade700),
-      SyncStatus.uploading => (Icons.cloud_upload, Colors.blue.shade700),
-      SyncStatus.syncFailed => (Icons.sync_problem, Colors.orange.shade800),
-      SyncStatus.conflict => (Icons.warning_amber, Colors.red.shade700),
-      _ => (
-          online ? Icons.schedule : Icons.cloud_off,
-          Colors.grey.shade700,
-        ),
+    final syncIcon = switch (record.syncStatus) {
+      SyncStatus.synced => Icons.cloud_done_rounded,
+      SyncStatus.uploading => Icons.cloud_upload_rounded,
+      SyncStatus.syncFailed => Icons.sync_problem_rounded,
+      SyncStatus.conflict => Icons.warning_amber_rounded,
+      _ => online ? Icons.schedule_rounded : Icons.cloud_off_rounded,
     };
 
     final (aiIcon, aiColor) = record.recordStatus == RecordStatus.confirmed
-        ? (Icons.verified, Colors.green.shade700)
+        ? (Icons.verified_rounded, AppColors.success)
         : switch (record.aiStatus) {
-            AiStatus.completed => (Icons.rate_review, Colors.teal.shade700),
-            AiStatus.failed => (Icons.edit_note, Colors.orange.shade800),
-            _ => (Icons.hourglass_empty, Colors.grey.shade700),
+            AiStatus.completed => (Icons.rate_review_rounded, AppColors.teal),
+            AiStatus.failed => (Icons.edit_note_rounded, AppColors.warning),
+            _ => (Icons.hourglass_empty_rounded, AppColors.idle),
           };
 
     return Wrap(
       spacing: 6,
-      runSpacing: 4,
+      runSpacing: 6,
       children: [
-        _chip(syncIcon, syncColor,
-            syncStatusLabel(l10n, record, online: online)),
-        _chip(aiIcon, aiColor, aiStatusLabel(l10n, record)),
+        _StatusPill(
+          icon: syncIcon,
+          color: syncColorFor(record),
+          label: syncStatusLabel(l10n, record, online: online),
+        ),
+        _StatusPill(
+          icon: aiIcon,
+          color: aiColor,
+          label: aiStatusLabel(l10n, record),
+        ),
       ],
     );
   }
+}
 
-  Widget _chip(IconData icon, Color color, String label) {
-    return Chip(
-      avatar: Icon(icon, size: 16, color: color),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      side: BorderSide(color: color.withValues(alpha: 0.4)),
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(40),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Color.lerp(color, Colors.black, 0.15),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

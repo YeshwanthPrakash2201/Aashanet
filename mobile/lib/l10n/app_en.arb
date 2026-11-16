@@ -101,5 +101,8 @@
   "confirmedDetails": "Confirmed details",
   "createdLabel": "Created",
   "close": "Close",
-  "aiNotVerifiedNotice": "AI suggestions are not medically verified. Please check every field."
+  "aiNotVerifiedNotice": "AI suggestions are not medically verified. Please check every field.",
+  "statRecordsSaved": "Records saved",
+  "statAwaitingReview": "Awaiting review",
+  "statNotSynced": "Not yet synced"
 }

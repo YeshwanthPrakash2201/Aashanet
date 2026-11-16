@@ -294,4 +294,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get aiNotVerifiedNotice =>
       'AI सुझाव चिकित्सकीय रूप से सत्यापित नहीं हैं। कृपया हर जानकारी जाँचें।';
+
+  @override
+  String get statRecordsSaved => 'सहेजे गए रिकॉर्ड';
+
+  @override
+  String get statAwaitingReview => 'समीक्षा बाकी';
+
+  @override
+  String get statNotSynced => 'अभी सिंक नहीं';
 }

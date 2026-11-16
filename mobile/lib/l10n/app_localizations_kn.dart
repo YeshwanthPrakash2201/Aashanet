@@ -293,4 +293,13 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get aiNotVerifiedNotice =>
       'AI ಸಲಹೆಗಳು ವೈದ್ಯಕೀಯವಾಗಿ ಪರಿಶೀಲಿಸಲ್ಪಟ್ಟಿಲ್ಲ. ದಯವಿಟ್ಟು ಪ್ರತಿಯೊಂದು ವಿವರವನ್ನೂ ಪರಿಶೀಲಿಸಿ.';
+
+  @override
+  String get statRecordsSaved => 'ಉಳಿಸಿದ ದಾಖಲೆಗಳು';
+
+  @override
+  String get statAwaitingReview => 'ಪರಿಶೀಲನೆ ಬಾಕಿ';
+
+  @override
+  String get statNotSynced => 'ಇನ್ನೂ ಸಿಂಕ್ ಆಗಿಲ್ಲ';
 }

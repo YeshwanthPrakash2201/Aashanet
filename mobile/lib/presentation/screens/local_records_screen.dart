@@ -7,6 +7,8 @@ import '../../domain/record_status.dart';
 import '../../domain/repositories/health_record_local_repository.dart';
 import '../../infrastructure/database/app_database.dart';
 import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
+import '../widgets/design.dart';
 import '../widgets/sync_status_widgets.dart';
 
 /// Every record saved on this phone by the logged-in worker, with its
@@ -64,16 +66,26 @@ class LocalRecordsScreen extends StatelessWidget {
               final records = snapshot.data!;
 
               if (records.isEmpty) {
-                return Center(child: Text(l10n.noLocalHealthRecords));
+                return EmptyState(
+                  icon: Icons.folder_open_rounded,
+                  message: l10n.noLocalHealthRecords,
+                );
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 28),
                 itemCount: records.length,
-                itemBuilder: (context, index) => _RecordTile(
-                  record: records[index],
-                  online: online,
-                  onTap: () => _open(context, records[index]),
+                itemBuilder: (context, index) => ResponsiveCenter(
+                  maxWidth: 820,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: FadeSlideIn(
+                    delay: Duration(milliseconds: 40 * (index < 8 ? index : 8)),
+                    child: _RecordTile(
+                      record: records[index],
+                      online: online,
+                      onTap: () => _open(context, records[index]),
+                    ),
+                  ),
                 ),
               );
             },
@@ -126,54 +138,119 @@ class _RecordTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
     final confirmed =
         HealthRecordLocalRepository.decodeJson(record.confirmedData);
     final suggested =
         HealthRecordLocalRepository.decodeJson(record.aiSuggestedData);
     final name = confirmed?['patient_name'] ?? suggested?['patient_name'];
+    final accent = syncColorFor(record);
+    final isVoice = record.audioPath != null;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Pressable(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                child: Icon(
-                  record.audioPath != null
-                      ? Icons.mic
-                      : Icons.medical_information,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name?.toString() ?? record.rawInput,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatDate(record.createdAt),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    RecordStatusChips(record: record, online: online),
-                  ],
-                ),
+        semanticLabel: name?.toString() ?? record.rawInput,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            border: Border.all(color: AppColors.line),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.forest.withValues(alpha: 0.04),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
             ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Status rail: the record's sync state at a glance.
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 5,
+                    color: accent,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: isVoice
+                                  ? AppColors.marigoldMist
+                                  : AppColors.tealMist,
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.sm),
+                            ),
+                            child: Icon(
+                              isVoice
+                                  ? Icons.mic_rounded
+                                  : Icons.notes_rounded,
+                              color: isVoice
+                                  ? AppColors.saffron
+                                  : AppColors.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name?.toString() ?? record.rawInput,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: AppColors.ink,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.schedule_rounded,
+                                      size: 14,
+                                      color: AppColors.inkMuted,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _formatDate(record.createdAt),
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: AppColors.inkMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                RecordStatusChips(
+                                  record: record,
+                                  online: online,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.inkMuted,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

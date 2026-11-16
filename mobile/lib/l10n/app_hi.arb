@@ -87,5 +87,8 @@
   "confirmedDetails": "पुष्टि किए गए विवरण",
   "createdLabel": "बनाया गया",
   "close": "बंद करें",
-  "aiNotVerifiedNotice": "AI सुझाव चिकित्सकीय रूप से सत्यापित नहीं हैं। कृपया हर जानकारी जाँचें।"
+  "aiNotVerifiedNotice": "AI सुझाव चिकित्सकीय रूप से सत्यापित नहीं हैं। कृपया हर जानकारी जाँचें।",
+  "statRecordsSaved": "सहेजे गए रिकॉर्ड",
+  "statAwaitingReview": "समीक्षा बाकी",
+  "statNotSynced": "अभी सिंक नहीं"
 }

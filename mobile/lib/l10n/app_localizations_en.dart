@@ -291,4 +291,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiNotVerifiedNotice =>
       'AI suggestions are not medically verified. Please check every field.';
+
+  @override
+  String get statRecordsSaved => 'Records saved';
+
+  @override
+  String get statAwaitingReview => 'Awaiting review';
+
+  @override
+  String get statNotSynced => 'Not yet synced';
 }

@@ -633,6 +633,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI suggestions are not medically verified. Please check every field.'**
   String get aiNotVerifiedNotice;
+
+  /// No description provided for @statRecordsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Records saved'**
+  String get statRecordsSaved;
+
+  /// No description provided for @statAwaitingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting review'**
+  String get statAwaitingReview;
+
+  /// No description provided for @statNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet synced'**
+  String get statNotSynced;
 }
 
 class _AppLocalizationsDelegate
