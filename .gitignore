@@ -44,3 +44,6 @@ Thumbs.db
 
 # Python build artifacts (large binary wheels do not belong in the repository)
 *.whl
+
+# Local login details written for the developer (never commit)
+dev-login.txt
