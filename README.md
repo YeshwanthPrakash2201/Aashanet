@@ -42,7 +42,8 @@ mobile/                  Flutter application
   lib/presentation/      design system, records list, language selection
   lib/l10n/              English, Kannada and Hindi texts
   test/                  unit, widget, live and screenshot tests
-docs/                    testing guide for the offline workflow
+docs/                    offline testing guide, deployment guide
+render.yaml              Render blueprint for the backend
 ```
 
 ## Requirements
@@ -116,6 +117,11 @@ The on-device checklist is in `docs/offline-sync-testing.md`.
 | `GEMINI_MODEL`, `GEMINI_FALLBACK_MODELS`, `GEMINI_TIMEOUT_SECONDS` | AI model choice and time limit |
 
 Never commit the real `.env` file.
+
+## Deployment
+
+To run the backend on the internet (Neon PostgreSQL + Render, free plans) and
+build a release APK for it, follow [docs/deployment.md](docs/deployment.md).
 
 ## Known limitations
 

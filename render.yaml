@@ -1,0 +1,43 @@
+# Render Blueprint for the AASHANet AI backend.
+# Full step-by-step guide: docs/deployment.md
+#
+# Render reads this file when you choose "New -> Blueprint" and pick this
+# repository. Values marked `sync: false` are secrets: Render asks you to
+# type them in its dashboard. They are never stored in this repository.
+
+services:
+  - type: web
+    name: aashanet-backend
+    runtime: python
+    plan: free
+    region: singapore          # closest Render region to India
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    autoDeploy: true           # redeploy on every push to main
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10         # same version as the local backend/.venv
+
+      # Neon (or any PostgreSQL) connection string - secret, typed in Render.
+      - key: DATABASE_URL
+        sync: false
+
+      # Render generates a long random secret for signing login tokens.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+
+      # Google Gemini - secret, typed in Render.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+      - key: GEMINI_FALLBACK_MODELS
+        value: gemini-3.8-flash
+      - key: GEMINI_TIMEOUT_SECONDS
+        value: "60"
