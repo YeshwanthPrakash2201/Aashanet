@@ -26,6 +26,8 @@ node_modules/
 # Flutter and Dart generated files
 mobile/.dart_tool/
 mobile/build/
+mobile/android/build/
+mobile/android/.gradle/
 mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
 mobile/android/local.properties
