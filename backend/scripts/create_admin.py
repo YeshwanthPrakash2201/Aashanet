@@ -8,6 +8,11 @@ Run from the `backend` folder with the virtual environment's Python:
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin --promote USERNAME
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin --list
     .\\.venv\\Scripts\\python.exe -m scripts.create_admin --reset-password USERNAME
+    .\\.venv\\Scripts\\python.exe -m scripts.create_admin --deactivate USERNAME
+    .\\.venv\\Scripts\\python.exe -m scripts.create_admin --activate USERNAME
+    .\\.venv\\Scripts\\python.exe -m scripts.create_admin --change-name USERNAME
+
+Full guide (users and PostgreSQL): docs/users-and-database.md
 
 The password is typed into the terminal (it is not shown on screen)
 and is stored only as a hash. It is never printed or logged.
@@ -155,6 +160,53 @@ def reset_password(db, service: UserService, username: str) -> int:
     return 0
 
 
+def set_active(db, service: UserService, username: str, active: bool) -> int:
+    """Switches an account on or off. A switched-off account cannot log
+    in, but it and its health records are kept (nothing is deleted)."""
+    if not service.get_user_by_username(username):
+        print(f"No user named '{username}'. See all users with --list.")
+        return 1
+
+    with db.cursor() as cursor:
+        cursor.execute(
+            "UPDATE users SET is_active = %s, "
+            "updated_at = CURRENT_TIMESTAMP WHERE username = %s",
+            (active, username),
+        )
+
+    db.commit()
+    state = "activated - can log in" if active else "deactivated - cannot log in"
+    print(f"'{username}' {state}.")
+    return 0
+
+
+def change_name(db, service: UserService, username: str) -> int:
+    """Changes the full name shown in the app (the username stays)."""
+    user = service.get_user_by_username(username)
+
+    if not user:
+        print(f"No user named '{username}'. See all users with --list.")
+        return 1
+
+    full_name = ask("New full name", user[4])
+
+    if not full_name:
+        print("Full name cannot be empty.")
+        return 1
+
+    with db.cursor() as cursor:
+        cursor.execute(
+            "UPDATE users SET full_name = %s, "
+            "updated_at = CURRENT_TIMESTAMP WHERE username = %s",
+            (full_name, username),
+        )
+
+    db.commit()
+    print(f"Full name of '{username}' is now '{full_name}'. "
+          "It shows in the app after the next login.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument(
@@ -173,6 +225,21 @@ def main() -> int:
         help="show all usernames, full names and roles",
     )
     parser.add_argument(
+        "--deactivate",
+        metavar="USERNAME",
+        help="stop a user from logging in (their records are kept)",
+    )
+    parser.add_argument(
+        "--activate",
+        metavar="USERNAME",
+        help="allow a deactivated user to log in again",
+    )
+    parser.add_argument(
+        "--change-name",
+        metavar="USERNAME",
+        help="change the full name shown in the app",
+    )
+    parser.add_argument(
         "--role",
         choices=ROLES,
         help="role for the new account (required unless --promote is used)",
@@ -181,7 +248,8 @@ def main() -> int:
 
     # No default role on purpose: silently creating an admin when a
     # worker account was intended is an easy and risky mistake.
-    if not (args.promote or args.reset_password or args.list or args.role):
+    if not (args.promote or args.reset_password or args.list or args.role
+            or args.deactivate or args.activate or args.change_name):
         parser.error(
             "choose a role: --role asha_worker (phone users) "
             "or --role admin (account managers)"
@@ -200,6 +268,15 @@ def main() -> int:
 
         if args.promote:
             return promote(db, service, args.promote)
+
+        if args.deactivate:
+            return set_active(db, service, args.deactivate, False)
+
+        if args.activate:
+            return set_active(db, service, args.activate, True)
+
+        if args.change_name:
+            return change_name(db, service, args.change_name)
 
         return create_account(service, args.role)
 
