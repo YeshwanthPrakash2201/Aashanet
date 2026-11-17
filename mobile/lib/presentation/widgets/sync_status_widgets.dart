@@ -39,66 +39,76 @@ class ConnectionStatusBadge extends StatelessWidget {
             final (icon, label, color) = syncing
                 ? (Icons.sync_rounded, l10n.syncing, AppColors.info)
                 : online
-                    ? (Icons.cloud_done_rounded, l10n.online, AppColors.success)
-                    : (Icons.cloud_off_rounded, l10n.offline, AppColors.idle);
+                ? (Icons.cloud_done_rounded, l10n.online, AppColors.success)
+                : (Icons.cloud_off_rounded, l10n.offline, AppColors.idle);
 
             final dotColor = onDark
                 ? (syncing
-                    ? const Color(0xFF8FC0FF)
-                    : online
-                        ? const Color(0xFF6EE7A8)
-                        : Colors.white54)
+                      ? const Color(0xFF8FC0FF)
+                      : online
+                      ? const Color(0xFF6EE7A8)
+                      : Colors.white54)
                 : color;
 
+            // Tapping re-checks the server at once (and syncing starts
+            // by itself if it is reachable), instead of waiting for the
+            // next automatic check.
             return Semantics(
               label: label,
               liveRegion: true,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: onDark
-                        ? Colors.white.withValues(alpha: 0.14)
-                        : color.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(40),
-                    border: Border.all(
-                      color: onDark
-                          ? Colors.white.withValues(alpha: 0.22)
-                          : color.withValues(alpha: 0.3),
+              button: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: services.connectivity.checkNow,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _StatusDot(color: dotColor, pulsing: syncing),
-                      const SizedBox(width: 8),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        child: Row(
-                          key: ValueKey(label),
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              icon,
-                              size: 16,
-                              color: onDark ? Colors.white : color,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                color: onDark ? Colors.white : color,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
+                    decoration: BoxDecoration(
+                      color: onDark
+                          ? Colors.white.withValues(alpha: 0.14)
+                          : color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(
+                        color: onDark
+                            ? Colors.white.withValues(alpha: 0.22)
+                            : color.withValues(alpha: 0.3),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _StatusDot(color: dotColor, pulsing: syncing),
+                        const SizedBox(width: 8),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: Row(
+                            key: ValueKey(label),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                icon,
+                                size: 16,
+                                color: onDark ? Colors.white : color,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  color: onDark ? Colors.white : color,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -201,10 +211,7 @@ class LoginRequiredBanner extends StatelessWidget {
           leading: const Icon(Icons.lock_clock),
           content: Text(l10n.loginToSync),
           actions: [
-            TextButton(
-              onPressed: onLogInAgain,
-              child: Text(l10n.logInAgain),
-            ),
+            TextButton(onPressed: onLogInAgain, child: Text(l10n.logInAgain)),
           ],
         );
       },
@@ -255,12 +262,12 @@ String aiStatusLabel(AppLocalizations l10n, HealthRecord record) {
 /// Colour that represents a record's sync state (used for the list's
 /// accent rail and the sync chip).
 Color syncColorFor(HealthRecord record) => switch (record.syncStatus) {
-      SyncStatus.synced => AppColors.success,
-      SyncStatus.uploading => AppColors.info,
-      SyncStatus.syncFailed => AppColors.warning,
-      SyncStatus.conflict => AppColors.danger,
-      _ => AppColors.idle,
-    };
+  SyncStatus.synced => AppColors.success,
+  SyncStatus.uploading => AppColors.info,
+  SyncStatus.syncFailed => AppColors.warning,
+  SyncStatus.conflict => AppColors.danger,
+  _ => AppColors.idle,
+};
 
 class RecordStatusChips extends StatelessWidget {
   const RecordStatusChips({

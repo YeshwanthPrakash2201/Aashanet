@@ -10,18 +10,21 @@ import 'package:flutter/foundation.dart';
 /// with no internet, or the server can be down.
 ///
 /// Network change events (from connectivity_plus) trigger an immediate
-/// check; while a network is present the server is also re-checked
-/// periodically, so recovery is noticed even without a network event.
+/// check, and the server is also re-checked periodically, so recovery is
+/// noticed even without a network event.
+///
+/// The network type Android reports is only a hint, never the answer: a
+/// phone sharing its own hotspot with the PC that runs the backend can
+/// report "no network" while the server is perfectly reachable through
+/// the hotspot. So the server is always probed, whatever is reported.
 class ConnectivityService {
   ConnectivityService({
     required this.probe,
     Stream<List<ConnectivityResult>>? networkChanges,
     Future<List<ConnectivityResult>> Function()? currentNetwork,
     this.recheckInterval = const Duration(seconds: 30),
-  })  : _networkChanges =
-            networkChanges ?? Connectivity().onConnectivityChanged,
-        _currentNetwork =
-            currentNetwork ?? Connectivity().checkConnectivity;
+  }) : _networkChanges = networkChanges ?? Connectivity().onConnectivityChanged,
+       _currentNetwork = currentNetwork ?? Connectivity().checkConnectivity;
 
   /// Returns true when the backend answers.
   final Future<bool> Function() probe;
@@ -34,35 +37,34 @@ class ConnectivityService {
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   Timer? _timer;
-  bool _hasNetwork = false;
   bool _checking = false;
 
   Future<void> start() async {
     _subscription ??= _networkChanges.listen(_onNetworkChanged);
-    _timer ??= Timer.periodic(recheckInterval, (_) {
-      if (_hasNetwork) {
-        checkNow();
-      }
-    });
+    _timer ??= Timer.periodic(recheckInterval, (_) => checkNow());
 
     try {
-      _onNetworkChanged(await _currentNetwork());
+      if (_reportsNoNetwork(await _currentNetwork())) {
+        isOnline.value = false;
+      }
     } catch (_) {
       // Some platforms cannot report the network type; just probe.
-      _hasNetwork = true;
-      await checkNow();
     }
+
+    await checkNow();
   }
 
-  void _onNetworkChanged(List<ConnectivityResult> results) {
-    _hasNetwork =
-        results.any((result) => result != ConnectivityResult.none);
+  static bool _reportsNoNetwork(List<ConnectivityResult> results) =>
+      results.every((result) => result == ConnectivityResult.none);
 
-    if (_hasNetwork) {
-      checkNow();
-    } else {
+  void _onNetworkChanged(List<ConnectivityResult> results) {
+    // Show "Offline" straight away when the network seems to be gone,
+    // then let the server itself confirm (see the class comment).
+    if (_reportsNoNetwork(results)) {
       isOnline.value = false;
     }
+
+    checkNow();
   }
 
   /// Probes the server now and updates [isOnline].

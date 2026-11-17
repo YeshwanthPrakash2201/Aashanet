@@ -28,8 +28,29 @@ void main() {
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
   test('starts offline when there is no network', () async {
+    serverUp = false;
     await service.start();
     expect(service.isOnline.value, isFalse);
+  });
+
+  test(
+    'online when Android reports no network but the server answers',
+    () async {
+      // A phone sharing its own hotspot with the backend PC can report
+      // "none" while the PC is reachable through the hotspot.
+      await service.start();
+      expect(service.isOnline.value, isTrue);
+    },
+  );
+
+  test('a later check notices the server coming back', () async {
+    serverUp = false;
+    await service.start();
+    expect(service.isOnline.value, isFalse);
+
+    serverUp = true;
+    await service.checkNow();
+    expect(service.isOnline.value, isTrue);
   });
 
   test('goes online when Wi-Fi appears and the server answers', () async {
@@ -57,6 +78,7 @@ void main() {
     await settle();
     expect(service.isOnline.value, isTrue);
 
+    serverUp = false;
     network.add([ConnectivityResult.none]);
     await settle();
 
