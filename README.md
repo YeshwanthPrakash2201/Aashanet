@@ -120,6 +120,9 @@ Never commit the real `.env` file.
 
 ## Deployment
 
+Managing login accounts and working with PostgreSQL (copy-and-paste commands):
+[docs/users-and-database.md](docs/users-and-database.md).
+
 To run the backend on the internet (Neon PostgreSQL + Render, free plans) and
 build a release APK for it, follow [docs/deployment.md](docs/deployment.md).
 
