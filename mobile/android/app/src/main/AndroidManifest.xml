@@ -3,10 +3,15 @@
     <!-- Needed to reach the AASHANet backend. Debug builds get it from the
          debug manifest; release APKs need it here. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- usesCleartextTraffic: the backend runs on a PC in the local Wi-Fi
+         over plain http://<ip>:8000 (see lib/config.dart). Android 9+
+         blocks plain http unless this is allowed, so changing the IP
+         in config.dart is all that is needed. -->
     <application
         android:label="mobile"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -82,10 +82,12 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```powershell
 cd mobile
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://<your-pc-ip>:8000
+flutter run
 ```
 
-Without `--dart-define`, the address in `lib/config.dart` is used.
+The server address is set in one place: `serverIp` in `mobile/lib/config.dart`.
+When your PC's Wi-Fi IP changes (check with `ipconfig`), edit that line and run the app again.
+For a one-off run you can also pass `--dart-define=API_BASE_URL=http://<ip>:8000`.
 
 ## Tests
 

@@ -5,7 +5,7 @@ architecture and tests.
 
 ```powershell
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://<your-pc-ip>:8000
+flutter run
 flutter analyze
 flutter test
 ```
