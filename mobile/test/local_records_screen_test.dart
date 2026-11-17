@@ -121,6 +121,41 @@ void main() {
     await cleanUp(tester);
   });
 
+  testWidgets('search and filter chips narrow the list', (tester) async {
+    await tester.runAsync(() async {
+      await repo.saveNewRecord(
+        ownerUsername: 'asha_demo',
+        rawInput: 'Ravi has fever',
+      );
+      await repo.saveNewRecord(
+        ownerUsername: 'asha_demo',
+        rawInput: 'Lakshmi has cough',
+      );
+    });
+
+    await tester.pumpWidget(app());
+    await settle(tester);
+
+    expect(find.text('All  2'), findsOneWidget);
+    expect(find.text('Not synced  2'), findsOneWidget);
+    expect(find.text('Needs review  0'), findsOneWidget);
+
+    // Search matches the typed text, case-insensitively.
+    await tester.enterText(find.byType(TextField), 'LAKSHMI');
+    await tester.pump();
+    expect(find.text('Lakshmi has cough'), findsOneWidget);
+    expect(find.text('Ravi has fever'), findsNothing);
+
+    // Nothing needs review yet (AI has not run offline).
+    await tester.enterText(find.byType(TextField), '');
+    await tester.tap(find.text('Needs review  0'));
+    await tester.pump();
+    expect(find.text('Ravi has fever'), findsNothing);
+    expect(find.text('No records match your search'), findsOneWidget);
+
+    await cleanUp(tester);
+  });
+
   testWidgets('another user\'s records are not listed', (tester) async {
     await tester.runAsync(() => repo.saveNewRecord(
           ownerUsername: 'someone_else',

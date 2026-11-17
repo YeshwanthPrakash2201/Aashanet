@@ -11,20 +11,105 @@ import '../theme/app_theme.dart';
 import '../widgets/design.dart';
 import '../widgets/sync_status_widgets.dart';
 
+/// Quick filters for the records list (also used by the home screen's
+/// summary numbers, which open the list already filtered).
+enum RecordFilter {
+  all,
+  needsReview,
+  notSynced,
+  conflicts;
+
+  bool matches(HealthRecord r) => switch (this) {
+    RecordFilter.all => true,
+    RecordFilter.needsReview =>
+      r.recordStatus == RecordStatus.draft &&
+          (r.aiStatus == AiStatus.completed || r.aiStatus == AiStatus.failed),
+    RecordFilter.notSynced => r.syncStatus != SyncStatus.synced,
+    RecordFilter.conflicts => r.syncStatus == SyncStatus.conflict,
+  };
+
+  String label(AppLocalizations l10n) => switch (this) {
+    RecordFilter.all => l10n.filterAll,
+    RecordFilter.needsReview => l10n.filterNeedsReview,
+    RecordFilter.notSynced => l10n.filterNotSynced,
+    RecordFilter.conflicts => l10n.filterConflicts,
+  };
+}
+
 /// Every record saved on this phone by the logged-in worker, with its
 /// sync and AI status. Updates live while syncing runs in the
-/// background, and stays fully usable offline.
-class LocalRecordsScreen extends StatelessWidget {
+/// background, and stays fully usable offline. Records can be searched,
+/// filtered, and pulled down to sync.
+class LocalRecordsScreen extends StatefulWidget {
   const LocalRecordsScreen({
     super.key,
     required this.services,
     required this.onReview,
+    this.onRecordVisit,
+    this.initialFilter = RecordFilter.all,
   });
 
   final AppServices services;
 
   /// Opens the review screen for a record whose AI step has finished.
   final void Function(BuildContext context, HealthRecord record) onReview;
+
+  /// Opens the record screen (button shown when there are no records yet).
+  final VoidCallback? onRecordVisit;
+
+  final RecordFilter initialFilter;
+
+  @override
+  State<LocalRecordsScreen> createState() => _LocalRecordsScreenState();
+}
+
+class _LocalRecordsScreenState extends State<LocalRecordsScreen> {
+  late RecordFilter _filter = widget.initialFilter;
+  final TextEditingController _search = TextEditingController();
+  late final Stream<List<HealthRecord>> _records = widget.services.records
+      .watchRecordsForOwner(widget.services.username);
+
+  AppServices get services => widget.services;
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSearch(HealthRecord r) {
+    final query = _search.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return true;
+    }
+
+    final confirmed = HealthRecordLocalRepository.decodeJson(r.confirmedData);
+    final suggested = HealthRecordLocalRepository.decodeJson(r.aiSuggestedData);
+
+    return [
+      confirmed?['patient_name'],
+      suggested?['patient_name'],
+      r.rawInput,
+      r.aiTranscript,
+      r.aiTranslation,
+    ].whereType<Object>().any(
+      (v) => v.toString().toLowerCase().contains(query),
+    );
+  }
+
+  /// Pull to refresh: re-check the server and sync everything that is due.
+  Future<void> _refresh() async {
+    if (await services.connectivity.checkNow()) {
+      await services.sync.syncAll();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +133,7 @@ class LocalRecordsScreen extends StatelessWidget {
         valueListenable: services.connectivity.isOnline,
         builder: (context, online, _) {
           return StreamBuilder<List<HealthRecord>>(
-            stream: services.records.watchRecordsForOwner(services.username),
+            stream: _records,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -63,29 +148,57 @@ class LocalRecordsScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final records = snapshot.data!;
+              final all = snapshot.data!;
 
-              if (records.isEmpty) {
-                return EmptyState(
-                  icon: Icons.folder_open_rounded,
-                  message: l10n.noLocalHealthRecords,
-                );
+              if (all.isEmpty) {
+                return _NoRecordsYet(onRecordVisit: widget.onRecordVisit);
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(0, 8, 0, 28),
-                itemCount: records.length,
-                itemBuilder: (context, index) => ResponsiveCenter(
-                  maxWidth: 820,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: FadeSlideIn(
-                    delay: Duration(milliseconds: 40 * (index < 8 ? index : 8)),
-                    child: _RecordTile(
-                      record: records[index],
-                      online: online,
-                      onTap: () => _open(context, records[index]),
-                    ),
-                  ),
+              final shown = all
+                  .where((r) => _filter.matches(r) && _matchesSearch(r))
+                  .toList();
+
+              return RefreshIndicator(
+                color: AppColors.teal,
+                onRefresh: _refresh,
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 28),
+                  itemCount: shown.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return ResponsiveCenter(
+                        maxWidth: 820,
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                        child: _SearchAndFilters(
+                          controller: _search,
+                          selected: _filter,
+                          counts: {
+                            for (final f in RecordFilter.values)
+                              f: all.where(f.matches).length,
+                          },
+                          onSelected: (f) => setState(() => _filter = f),
+                          emptyResult: shown.isEmpty,
+                        ),
+                      );
+                    }
+
+                    final record = shown[index - 1];
+                    final i = index - 1;
+
+                    return ResponsiveCenter(
+                      maxWidth: 820,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: FadeSlideIn(
+                        delay: Duration(milliseconds: 40 * (i < 8 ? i : 8)),
+                        child: _RecordTile(
+                          record: record,
+                          online: online,
+                          onTap: () => _open(context, record),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               );
             },
@@ -104,19 +217,146 @@ class LocalRecordsScreen extends StatelessWidget {
       return;
     }
 
-    final reviewable = record.recordStatus == RecordStatus.draft &&
+    final reviewable =
+        record.recordStatus == RecordStatus.draft &&
         record.serverRecordId != null &&
         (record.aiStatus == AiStatus.completed ||
             record.aiStatus == AiStatus.failed);
 
     if (reviewable) {
-      onReview(context, record);
+      widget.onReview(context, record);
       return;
     }
 
     showDialog<void>(
       context: context,
       builder: (_) => _DetailsDialog(record: record),
+    );
+  }
+}
+
+// ============================================================
+// SEARCH AND FILTERS
+// ============================================================
+
+class _SearchAndFilters extends StatelessWidget {
+  const _SearchAndFilters({
+    required this.controller,
+    required this.selected,
+    required this.counts,
+    required this.onSelected,
+    required this.emptyResult,
+  });
+
+  final TextEditingController controller;
+  final RecordFilter selected;
+  final Map<RecordFilter, int> counts;
+  final ValueChanged<RecordFilter> onSelected;
+  final bool emptyResult;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: controller,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l10n.searchRecords,
+            prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: controller.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: l10n.close,
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: controller.clear,
+                  ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final f in RecordFilter.values)
+                // Conflicts only appear when there are any.
+                if (f != RecordFilter.conflicts || (counts[f] ?? 0) > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text('${f.label(l10n)}  ${counts[f] ?? 0}'),
+                      selected: f == selected,
+                      showCheckmark: false,
+                      selectedColor: f == RecordFilter.conflicts
+                          ? AppColors.dangerMist
+                          : AppColors.tealMist,
+                      side: BorderSide(
+                        color: f == selected ? AppColors.teal : AppColors.line,
+                      ),
+                      labelStyle: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: f == selected
+                                ? AppColors.forest
+                                : AppColors.ink,
+                          ),
+                      onSelected: (_) => onSelected(f),
+                    ),
+                  ),
+            ],
+          ),
+        ),
+        if (emptyResult) ...[
+          const SizedBox(height: 32),
+          EmptyState(
+            icon: Icons.search_off_rounded,
+            message: l10n.noMatchingRecords,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Shown before the worker has saved any record: explains the screen and
+/// offers the main action.
+class _NoRecordsYet extends StatelessWidget {
+  const _NoRecordsYet({required this.onRecordVisit});
+
+  final VoidCallback? onRecordVisit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Center(
+      child: SingleChildScrollView(
+        child: ResponsiveCenter(
+          maxWidth: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              EmptyState(
+                icon: Icons.folder_open_rounded,
+                message: l10n.noLocalHealthRecords,
+              ),
+              if (onRecordVisit != null)
+                GradientButton(
+                  label: l10n.recordAVisit,
+                  icon: Icons.mic_rounded,
+                  onPressed: onRecordVisit,
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -139,10 +379,12 @@ class _RecordTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final confirmed =
-        HealthRecordLocalRepository.decodeJson(record.confirmedData);
-    final suggested =
-        HealthRecordLocalRepository.decodeJson(record.aiSuggestedData);
+    final confirmed = HealthRecordLocalRepository.decodeJson(
+      record.confirmedData,
+    );
+    final suggested = HealthRecordLocalRepository.decodeJson(
+      record.aiSuggestedData,
+    );
     final name = confirmed?['patient_name'] ?? suggested?['patient_name'];
     final accent = syncColorFor(record);
     final isVoice = record.audioPath != null;
@@ -190,13 +432,10 @@ class _RecordTile extends StatelessWidget {
                               color: isVoice
                                   ? AppColors.marigoldMist
                                   : AppColors.tealMist,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.sm),
+                              borderRadius: BorderRadius.circular(AppRadii.sm),
                             ),
                             child: Icon(
-                              isVoice
-                                  ? Icons.mic_rounded
-                                  : Icons.notes_rounded,
+                              isVoice ? Icons.mic_rounded : Icons.notes_rounded,
                               color: isVoice
                                   ? AppColors.saffron
                                   : AppColors.teal,
@@ -293,8 +532,9 @@ class _DetailsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed =
-        HealthRecordLocalRepository.decodeJson(record.confirmedData);
+    final confirmed = HealthRecordLocalRepository.decodeJson(
+      record.confirmedData,
+    );
 
     Widget section(String title, String? body) {
       if (body == null || body.isEmpty) {
@@ -324,8 +564,10 @@ class _DetailsDialog extends StatelessWidget {
             RecordStatusChips(record: record, online: true),
             const SizedBox(height: 12),
             section(l10n.createdLabel, _formatDate(record.createdAt)),
-            section(l10n.confirmedDetails,
-                confirmed == null ? null : _describe(confirmed)),
+            section(
+              l10n.confirmedDetails,
+              confirmed == null ? null : _describe(confirmed),
+            ),
             section(l10n.transcriptLabel, record.aiTranscript),
             section(l10n.translationLabel, record.aiTranslation),
             if (record.audioPath == null) section('', record.rawInput),
@@ -377,15 +619,27 @@ class _ConflictDialog extends StatelessWidget {
           children: [
             Text(l10n.conflictBody),
             const SizedBox(height: 16),
-            Text(l10n.yourVersion,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(_describe(
-                HealthRecordLocalRepository.decodeJson(record.confirmedData))),
+            Text(
+              l10n.yourVersion,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              _describe(
+                HealthRecordLocalRepository.decodeJson(record.confirmedData),
+              ),
+            ),
             const SizedBox(height: 12),
-            Text(l10n.serverVersion,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(_describe(HealthRecordLocalRepository.decodeJson(
-                record.conflictServerData))),
+            Text(
+              l10n.serverVersion,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              _describe(
+                HealthRecordLocalRepository.decodeJson(
+                  record.conflictServerData,
+                ),
+              ),
+            ),
           ],
         ),
       ),

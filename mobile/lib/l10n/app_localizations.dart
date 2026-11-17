@@ -609,6 +609,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not yet synced'**
   String get statNotSynced;
+
+  /// No description provided for @aiExtractedInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Extracted Information'**
+  String get aiExtractedInformation;
+
+  /// No description provided for @reviewIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and edit the information extracted by AASHANet AI before saving.'**
+  String get reviewIntro;
+
+  /// No description provided for @originalRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Original record'**
+  String get originalRecord;
+
+  /// No description provided for @aiSuggestedData.
+  ///
+  /// In en, this message translates to:
+  /// **'AI suggested details'**
+  String get aiSuggestedData;
+
+  /// No description provided for @beneficiaryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Beneficiary name'**
+  String get beneficiaryName;
+
+  /// No description provided for @ageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get ageLabel;
+
+  /// No description provided for @symptomsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Symptoms'**
+  String get symptomsLabel;
+
+  /// No description provided for @symptomsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate symptoms with commas'**
+  String get symptomsHint;
+
+  /// No description provided for @durationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get durationLabel;
+
+  /// No description provided for @confirmAndSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Save'**
+  String get confirmAndSave;
+
+  /// No description provided for @saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get saving;
+
+  /// No description provided for @enterBeneficiaryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the beneficiary name'**
+  String get enterBeneficiaryName;
+
+  /// No description provided for @ageMustBeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Age must be a number from 0 to 120'**
+  String get ageMustBeNumber;
+
+  /// No description provided for @aiFilledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled by AI – please check'**
+  String get aiFilledHint;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoon;
+
+  /// No description provided for @changeLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Change language'**
+  String get changeLanguage;
+
+  /// No description provided for @spokenLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language spoken in the recording'**
+  String get spokenLanguage;
+
+  /// No description provided for @recordAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Record again'**
+  String get recordAgain;
+
+  /// No description provided for @recordingDiscarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording discarded'**
+  String get recordingDiscarded;
+
+  /// No description provided for @offlineRecordNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You are offline. The record will be saved on this phone and processed when you are back online.'**
+  String get offlineRecordNotice;
+
+  /// No description provided for @searchRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or text'**
+  String get searchRecords;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// No description provided for @filterNeedsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs review'**
+  String get filterNeedsReview;
+
+  /// No description provided for @filterNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced'**
+  String get filterNotSynced;
+
+  /// No description provided for @filterConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts'**
+  String get filterConflicts;
+
+  /// No description provided for @noMatchingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records match your search'**
+  String get noMatchingRecords;
+
+  /// No description provided for @recordAVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a visit'**
+  String get recordAVisit;
 }
 
 class _AppLocalizationsDelegate

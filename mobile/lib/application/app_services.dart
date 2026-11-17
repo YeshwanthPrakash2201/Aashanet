@@ -49,6 +49,10 @@ class AppServices {
     return services;
   }
 
+  /// Like [current], but `null` instead of an error when the services
+  /// have not been started (e.g. in widget tests of a single screen).
+  static AppServices? get maybeCurrent => _current;
+
   /// Starts (or reuses) the services for [username]. Safe to call every
   /// time the home screen opens.
   static Future<AppServices> startFor(String username) async {

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -12,6 +15,7 @@ import 'application/app_services.dart';
 import 'config.dart';
 import 'domain/record_status.dart';
 import 'infrastructure/database/app_database.dart';
+import 'presentation/app_locale.dart';
 import 'presentation/review_data.dart';
 import 'presentation/screens/local_records_screen.dart';
 import 'presentation/theme/app_theme.dart';
@@ -37,7 +41,6 @@ class AashaNetApp extends StatefulWidget {
 class _AashaNetAppState extends State<AashaNetApp> {
   final LanguageStorage _languageStorage = LanguageStorage();
 
-  Locale? _selectedLocale;
   bool _isLoadingLanguage = true;
 
   @override
@@ -53,18 +56,12 @@ class _AashaNetAppState extends State<AashaNetApp> {
       return;
     }
 
-    setState(() {
-      if (languageCode != null) {
-        _selectedLocale = Locale(languageCode);
-      }
+    if (languageCode != null) {
+      appLocale.value = Locale(languageCode);
+    }
 
+    setState(() {
       _isLoadingLanguage = false;
-    });
-  }
-
-  void _onLanguageSelected(Locale locale) {
-    setState(() {
-      _selectedLocale = locale;
     });
   }
 
@@ -79,33 +76,38 @@ class _AashaNetAppState extends State<AashaNetApp> {
       );
     }
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'AASHANet AI',
+    // Rebuilds the whole app whenever the language changes (first-launch
+    // choice or the language button on the home screen).
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: appLocale,
+      builder: (context, selectedLocale, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'AASHANet AI',
 
-      // Selected app language.
-      locale: _selectedLocale ?? const Locale('en'),
+        // Selected app language.
+        locale: selectedLocale ?? const Locale('en'),
 
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
 
-      supportedLocales: const [
-        Locale('en'),
-        Locale('kn'),
-        Locale('hi'),
-      ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('kn'),
+          Locale('hi'),
+        ],
 
-      theme: AppTheme.light(),
+        theme: AppTheme.light(),
 
-      home: _selectedLocale == null
-          ? LanguageSelectionScreen(
-              onLanguageSelected: _onLanguageSelected,
-            )
-          : const StartupScreen(),
+        home: selectedLocale == null
+            ? LanguageSelectionScreen(
+                onLanguageSelected: (locale) => appLocale.value = locale,
+              )
+            : const StartupScreen(),
+      ),
     );
   }
 }
@@ -561,6 +563,29 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  void _openRecords([RecordFilter filter = RecordFilter.all]) {
+    final services = _services;
+
+    if (services == null) {
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocalRecordsScreen(
+          services: services,
+          onReview: _openReview,
+          onRecordVisit: () {
+            Navigator.pop(context);
+            _openRecordScreen();
+          },
+          initialFilter: filter,
+        ),
+      ),
+    );
+  }
+
   void _openReview(BuildContext context, HealthRecord record) {
     Navigator.push(
       context,
@@ -635,17 +660,7 @@ class _HomeScreenState extends State<HomeScreen>
         title: l10n.dataShowing,
         subtitle: l10n.localHealthRecords,
         vertical: wide,
-        onTap: services == null
-            ? null
-            : () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LocalRecordsScreen(
-                      services: services,
-                      onReview: _openReview,
-                    ),
-                  ),
-                ),
+        onTap: services == null ? null : _openRecords,
       ),
       ActionTile(
         icon: Icons.keyboard_alt_outlined,
@@ -661,16 +676,11 @@ class _HomeScreenState extends State<HomeScreen>
       ActionTile(
         icon: Icons.task_alt_rounded,
         title: l10n.tasks,
+        subtitle: l10n.comingSoon,
         color: AppColors.saffron,
         background: AppColors.marigoldMist,
         vertical: wide,
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tasks feature coming next'),
-            ),
-          );
-        },
+        onTap: null,
       ),
     ];
 
@@ -777,6 +787,12 @@ class _HomeScreenState extends State<HomeScreen>
                   if (services != null)
                     ConnectionStatusBadge(services: services, onDark: true),
                   IconButton(
+                    tooltip: l10n.changeLanguage,
+                    icon: const Icon(Icons.translate_rounded),
+                    color: Colors.white,
+                    onPressed: () => showLanguageSheet(context),
+                  ),
+                  IconButton(
                     tooltip: l10n.logout,
                     icon: const Icon(Icons.logout_rounded),
                     color: Colors.white,
@@ -844,7 +860,10 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: _HomeSummary(services: services),
+                  child: _HomeSummary(
+                    services: services,
+                    onOpen: _openRecords,
+                  ),
                 ),
               ],
             ],
@@ -972,9 +991,12 @@ class _RecordCallToAction extends StatelessWidget {
 // ------------------------------------------------------------
 
 class _HomeSummary extends StatelessWidget {
-  const _HomeSummary({required this.services});
+  const _HomeSummary({required this.services, required this.onOpen});
 
   final AppServices services;
+
+  /// Opens the records list with the tapped number's filter.
+  final ValueChanged<RecordFilter> onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -985,21 +1007,9 @@ class _HomeSummary extends StatelessWidget {
       builder: (context, snapshot) {
         final records = snapshot.data ?? const <HealthRecord>[];
 
-        final awaitingReview = records
-            .where(
-              (r) =>
-                  r.recordStatus == RecordStatus.draft &&
-                  (r.aiStatus == AiStatus.completed ||
-                      r.aiStatus == AiStatus.failed),
-            )
-            .length;
-
-        final notSynced = records
-            .where(
-              (r) =>
-                  r.syncStatus != SyncStatus.synced,
-            )
-            .length;
+        final awaitingReview =
+            records.where(RecordFilter.needsReview.matches).length;
+        final notSynced = records.where(RecordFilter.notSynced.matches).length;
 
         return Row(
           children: [
@@ -1008,6 +1018,7 @@ class _HomeSummary extends StatelessWidget {
                 value: records.length,
                 label: l10n.statRecordsSaved,
                 icon: Icons.inventory_2_outlined,
+                onTap: () => onOpen(RecordFilter.all),
               ),
             ),
             const SizedBox(width: 10),
@@ -1017,6 +1028,7 @@ class _HomeSummary extends StatelessWidget {
                 label: l10n.statAwaitingReview,
                 icon: Icons.rate_review_outlined,
                 highlight: awaitingReview > 0,
+                onTap: () => onOpen(RecordFilter.needsReview),
               ),
             ),
             const SizedBox(width: 10),
@@ -1025,6 +1037,7 @@ class _HomeSummary extends StatelessWidget {
                 value: notSynced,
                 label: l10n.statNotSynced,
                 icon: Icons.cloud_upload_outlined,
+                onTap: () => onOpen(RecordFilter.notSynced),
               ),
             ),
           ],
@@ -1039,16 +1052,27 @@ class _SummaryStat extends StatelessWidget {
     required this.value,
     required this.label,
     required this.icon,
+    required this.onTap,
     this.highlight = false,
   });
 
   final int value;
   final String label;
   final IconData icon;
+  final VoidCallback onTap;
   final bool highlight;
 
   @override
   Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      borderRadius: AppRadii.md,
+      semanticLabel: '$value $label',
+      child: _body(),
+    );
+  }
+
+  Widget _body() {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -1142,6 +1166,41 @@ class _RecordScreenState
 
   bool isProcessing = false;
 
+  /// Language spoken in the recording, sent to the AI. Defaults to the
+  /// app language; the worker can change it with the chips.
+  String? _spokenLanguage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _spokenLanguage ??= spokenLanguageFor(Localizations.localeOf(context));
+  }
+
+  /// Deletes an unsent recording so the worker can record again.
+  Future<void> _discardRecording() async {
+    final path = _audioPath;
+
+    setState(() {
+      _audioPath = null;
+    });
+
+    if (path != null) {
+      try {
+        await File(path).delete();
+      } catch (_) {
+        // Already gone; nothing to clean up.
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.recordingDiscarded)),
+    );
+  }
+
   @override
   void dispose() {
     _audioRecorder.dispose();
@@ -1155,6 +1214,8 @@ class _RecordScreenState
       if (_isRecording) {
         final path =
             await _audioRecorder.stop();
+
+        HapticFeedback.mediumImpact();
 
         if (!mounted) {
           return;
@@ -1213,6 +1274,8 @@ class _RecordScreenState
         ),
         path: audioPath,
       );
+
+      HapticFeedback.mediumImpact();
 
       if (!mounted) {
         return;
@@ -1285,7 +1348,7 @@ class _RecordScreenState
       localRecordId = await services.records.saveNewRecord(
         ownerUsername: services.username,
         rawInput: rawText.isEmpty ? '[Voice recording]' : rawText,
-        inputLanguage: hasAudio ? 'Kannada' : 'en',
+        inputLanguage: hasAudio ? (_spokenLanguage ?? 'Kannada') : 'en',
         audioPath: _audioPath,
       );
     } catch (e) {
@@ -1428,15 +1491,61 @@ class _RecordScreenState
                       )
                     : const SizedBox(key: ValueKey('idle'), height: 4),
           ),
+          if (_audioPath != null && !_isRecording)
+            TextButton.icon(
+              onPressed: isProcessing ? null : _discardRecording,
+              icon: const Icon(Icons.replay_rounded),
+              label: Text(l10n.recordAgain),
+            ),
           const SizedBox(height: 12),
           Text(
             _isRecording ? l10n.tapToStopRecording : l10n.tapToRecordVoice,
             textAlign: TextAlign.center,
             style: textTheme.titleMedium?.copyWith(color: AppColors.forest),
           ),
+          const SizedBox(height: 18),
+          Text(
+            l10n.spokenLanguage,
+            style: textTheme.labelLarge?.copyWith(color: AppColors.inkMuted),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final (value, label) in [
+                ('Kannada', 'ಕನ್ನಡ'),
+                ('Hindi', 'हिंदी'),
+                ('English', 'English'),
+              ])
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _spokenLanguage == value,
+                  showCheckmark: false,
+                  selectedColor: AppColors.tealMist,
+                  side: BorderSide(
+                    color: _spokenLanguage == value
+                        ? AppColors.teal
+                        : AppColors.line,
+                  ),
+                  labelStyle: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: _spokenLanguage == value
+                        ? AppColors.forest
+                        : AppColors.ink,
+                  ),
+                  onSelected: _isRecording || isProcessing
+                      ? null
+                      : (_) => setState(() => _spokenLanguage = value),
+                ),
+            ],
+          ),
         ],
       ),
     );
+
+    final services = AppServices.maybeCurrent;
 
     final typingPanel = SurfaceCard(
       child: Column(
@@ -1490,6 +1599,21 @@ class _RecordScreenState
                   ],
                 ),
               ),
+              if (services != null)
+                ValueListenableBuilder<bool>(
+                  valueListenable: services.connectivity.isOnline,
+                  builder: (context, online, _) => online
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Callout(
+                            icon: Icons.cloud_off_rounded,
+                            color: AppColors.info,
+                            background: AppColors.infoMist,
+                            child: Text(l10n.offlineRecordNotice),
+                          ),
+                        ),
+                ),
               const SizedBox(height: 22),
               if (wide)
                 IntrinsicHeight(
@@ -1585,21 +1709,19 @@ class ReviewRecordScreen
 }
 
 
-  class _ReviewRecordScreenState
-    extends State<ReviewRecordScreen> {
-  AppLocalizations get l10n =>
-      AppLocalizations.of(context)!;
-  late TextEditingController
-      patientNameController;
+class _ReviewRecordScreenState extends State<ReviewRecordScreen> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
-  late TextEditingController
-      ageController;
+  late final TextEditingController patientNameController;
+  late final TextEditingController ageController;
+  late final TextEditingController symptomsController;
+  late final TextEditingController durationController;
 
-  late TextEditingController
-      symptomsController;
+  /// Fields the AI filled in, shown with a "please check" hint.
+  late final Set<String> _aiFilled;
 
-  late TextEditingController
-      durationController;
+  String? _nameError;
+  String? _ageError;
 
   bool isSaving = false;
 
@@ -1608,46 +1730,29 @@ class ReviewRecordScreen
     super.initState();
 
     final suggestedData =
-        (widget.recordData[
-                    'ai_suggested_data']
-                as Map<String, dynamic>?) ??
-            (widget.recordData[
-                    'analyzed']
-                as Map<String, dynamic>?) ??
+        (widget.recordData['ai_suggested_data'] as Map<String, dynamic>?) ??
+            (widget.recordData['analyzed'] as Map<String, dynamic>?) ??
             {};
 
-    patientNameController =
-        TextEditingController(
-      text: suggestedData[
-                  'patient_name']
-              ?.toString() ??
-          '',
+    final symptoms = suggestedData['symptoms'] as List<dynamic>? ?? [];
+
+    patientNameController = TextEditingController(
+      text: suggestedData['patient_name']?.toString() ?? '',
+    );
+    ageController = TextEditingController(
+      text: suggestedData['age']?.toString() ?? '',
+    );
+    symptomsController = TextEditingController(text: symptoms.join(', '));
+    durationController = TextEditingController(
+      text: suggestedData['duration']?.toString() ?? '',
     );
 
-    ageController =
-        TextEditingController(
-      text: suggestedData['age']
-              ?.toString() ??
-          '',
-    );
-
-    final symptoms =
-        suggestedData['symptoms']
-                as List<dynamic>? ??
-            [];
-
-    symptomsController =
-        TextEditingController(
-      text: symptoms.join(', '),
-    );
-
-    durationController =
-        TextEditingController(
-      text: suggestedData[
-                  'duration']
-              ?.toString() ??
-          '',
-    );
+    _aiFilled = {
+      if (patientNameController.text.isNotEmpty) 'name',
+      if (ageController.text.isNotEmpty) 'age',
+      if (symptomsController.text.isNotEmpty) 'symptoms',
+      if (durationController.text.isNotEmpty) 'duration',
+    };
   }
 
   @override
@@ -1660,6 +1765,33 @@ class ReviewRecordScreen
     super.dispose();
   }
 
+  /// Checks the name and age, showing any problem under the field.
+  /// Returns the age (or null when left empty) if everything is valid.
+  ({bool valid, int? age}) _validate() {
+    final name = patientNameController.text.trim();
+    final ageText = ageController.text.trim();
+
+    int? age;
+    String? ageError;
+
+    if (ageText.isNotEmpty) {
+      age = int.tryParse(ageText);
+
+      // The server only accepts ages 0-120; anything else would make
+      // the record fail to sync forever.
+      if (age == null || age < 0 || age > 120) {
+        ageError = l10n.ageMustBeNumber;
+      }
+    }
+
+    setState(() {
+      _nameError = name.isEmpty ? l10n.enterBeneficiaryName : null;
+      _ageError = ageError;
+    });
+
+    return (valid: _nameError == null && _ageError == null, age: age);
+  }
+
   /// Saves the worker's confirmed details on the phone first, then sends
   /// them to the server if it is reachable. Offline, the confirmation
   /// waits in the sync queue. Only what the worker confirmed here is
@@ -1668,46 +1800,19 @@ class ReviewRecordScreen
     final patientName =
         patientNameController.text.trim();
 
-    final ageText =
-        ageController.text.trim();
-
     final symptomsText =
         symptomsController.text.trim();
 
     final duration =
         durationController.text.trim();
 
-    if (patientName.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please enter beneficiary name',
-          ),
-        ),
-      );
+    final check = _validate();
 
+    if (!check.valid) {
       return;
     }
 
-    int? age;
-
-    if (ageText.isNotEmpty) {
-      age = int.tryParse(ageText);
-
-      if (age == null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Age must be a valid number',
-            ),
-          ),
-        );
-
-        return;
-      }
-    }
+    final age = check.age;
 
     final symptoms =
         symptomsText.isEmpty
@@ -1799,7 +1904,7 @@ class ReviewRecordScreen
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(l10n.ok),
             ),
           ],
         );
@@ -1815,41 +1920,34 @@ class ReviewRecordScreen
 
   @override
   Widget build(BuildContext context) {
-    final rawRecord =
-        widget.recordData[
-                    'transcript']
-                ?.toString() ??
-            widget.recordData[
-                    'raw_input']
-                ?.toString() ??
-            '';
+    final rawRecord = widget.recordData['transcript']?.toString() ??
+        widget.recordData['raw_input']?.toString() ??
+        '';
 
-    final aiStatus =
-        widget.recordData[
-                    'ai_status']
-                ?.toString() ??
-            '';
+    // English translation of a Kannada/Hindi recording, if the AI made one
+    // and it differs from what was said.
+    final english = widget.recordData['english']?.toString().trim() ?? '';
+    final showEnglish = english.isNotEmpty && english != rawRecord.trim();
 
-    final recordStatus =
-        widget.recordData[
-                    'record_status']
-                ?.toString() ??
-            '';
+    final aiFailed =
+        widget.recordData['ai_status']?.toString() == AiStatus.failed;
 
     final textTheme = Theme.of(context).textTheme;
     final wide = MediaQuery.sizeOf(context).width >= 900;
+
+    String? aiHint(String field) =>
+        _aiFilled.contains(field) ? l10n.aiFilledHint : null;
 
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'AI Extracted Information',
+          l10n.aiExtractedInformation,
           style: textTheme.headlineSmall?.copyWith(color: AppColors.forest),
         ),
         const SizedBox(height: 6),
         Text(
-          'Review and edit the information '
-          'extracted by AASHANet AI before saving.',
+          l10n.reviewIntro,
           style: textTheme.bodyLarge?.copyWith(color: AppColors.inkMuted),
         ),
         const SizedBox(height: 16),
@@ -1857,47 +1955,52 @@ class ReviewRecordScreen
           icon: Icons.health_and_safety_outlined,
           child: Text(l10n.aiNotVerifiedNotice),
         ),
+        if (aiFailed) ...[
+          const SizedBox(height: 12),
+          Callout(
+            icon: Icons.error_outline_rounded,
+            color: AppColors.danger,
+            background: AppColors.dangerMist,
+            child: Text(l10n.aiFailed),
+          ),
+        ],
       ],
     );
+
+    Widget quote(String text, Color accent) => Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          decoration: BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.circular(AppRadii.sm),
+            border: Border(left: BorderSide(color: accent, width: 4)),
+          ),
+          child: Text(
+            text,
+            style: textTheme.bodyLarge?.copyWith(color: AppColors.ink),
+          ),
+        );
 
     final originalCard = SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionLabel(
-            'Original Record',
+          SectionLabel(
+            l10n.originalRecord,
             icon: Icons.format_quote_rounded,
           ),
           const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: BoxDecoration(
-              color: AppColors.cream,
-              borderRadius: BorderRadius.circular(AppRadii.sm),
-              border: const Border(
-                left: BorderSide(color: AppColors.marigold, width: 4),
-              ),
+          quote(rawRecord, AppColors.marigold),
+          if (showEnglish) ...[
+            const SizedBox(height: 16),
+            Text(
+              l10n.translationLabel,
+              style: textTheme.labelLarge?.copyWith(color: AppColors.inkMuted),
             ),
-            child: Text(
-              rawRecord,
-              style: textTheme.bodyLarge?.copyWith(color: AppColors.ink),
-            ),
-          ),
+            const SizedBox(height: 8),
+            quote(english, AppColors.teal),
+          ],
         ],
-      ),
-    );
-
-    final statusCard = Callout(
-      icon: Icons.auto_awesome_rounded,
-      color: AppColors.teal,
-      background: AppColors.tealMist,
-      child: Text(
-        'AI status: $aiStatus\n'
-        'Record status: '
-        '$recordStatus\n\n'
-        'Please verify the information '
-        'before confirming the record.',
       ),
     );
 
@@ -1905,26 +2008,39 @@ class ReviewRecordScreen
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionLabel(
-            'AI Suggested Data',
+          SectionLabel(
+            l10n.aiSuggestedData,
             icon: Icons.auto_awesome_rounded,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: patientNameController,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Beneficiary Name',
-              prefixIcon: Icon(Icons.person_outline_rounded),
+            textInputAction: TextInputAction.next,
+            onChanged: (_) {
+              if (_nameError != null) setState(() => _nameError = null);
+            },
+            decoration: InputDecoration(
+              labelText: l10n.beneficiaryName,
+              helperText: aiHint('name'),
+              errorText: _nameError,
+              prefixIcon: const Icon(Icons.person_outline_rounded),
             ),
           ),
           const SizedBox(height: 14),
           TextField(
             controller: ageController,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Age',
-              prefixIcon: Icon(Icons.cake_outlined),
+            textInputAction: TextInputAction.next,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) {
+              if (_ageError != null) setState(() => _ageError = null);
+            },
+            decoration: InputDecoration(
+              labelText: l10n.ageLabel,
+              helperText: aiHint('age'),
+              errorText: _ageError,
+              prefixIcon: const Icon(Icons.cake_outlined),
             ),
           ),
           const SizedBox(height: 14),
@@ -1932,19 +2048,21 @@ class ReviewRecordScreen
             controller: symptomsController,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Symptoms',
-              hintText: 'Separate multiple symptoms with commas',
-              prefixIcon: Icon(Icons.medical_information_outlined),
+            decoration: InputDecoration(
+              labelText: l10n.symptomsLabel,
+              helperText: aiHint('symptoms') ?? l10n.symptomsHint,
+              prefixIcon: const Icon(Icons.medical_information_outlined),
               alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 14),
           TextField(
             controller: durationController,
-            decoration: const InputDecoration(
-              labelText: 'Duration',
-              prefixIcon: Icon(Icons.timer_outlined),
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: l10n.durationLabel,
+              helperText: aiHint('duration'),
+              prefixIcon: const Icon(Icons.timer_outlined),
             ),
           ),
         ],
@@ -1971,13 +2089,7 @@ class ReviewRecordScreen
                     Expanded(
                       child: FadeSlideIn(
                         delay: const Duration(milliseconds: 100),
-                        child: Column(
-                          children: [
-                            originalCard,
-                            const SizedBox(height: 16),
-                            statusCard,
-                          ],
-                        ),
+                        child: originalCard,
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -1999,11 +2111,6 @@ class ReviewRecordScreen
                   delay: const Duration(milliseconds: 160),
                   child: formCard,
                 ),
-                const SizedBox(height: 16),
-                FadeSlideIn(
-                  delay: const Duration(milliseconds: 220),
-                  child: statusCard,
-                ),
               ],
             ],
           ),
@@ -2015,7 +2122,7 @@ class ReviewRecordScreen
           maxWidth: 1080,
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
           child: GradientButton(
-            label: isSaving ? 'Saving...' : 'Confirm & Save',
+            label: isSaving ? l10n.saving : l10n.confirmAndSave,
             icon: Icons.check_circle_rounded,
             loading: isSaving,
             onPressed: isSaving ? null : confirmRecord,

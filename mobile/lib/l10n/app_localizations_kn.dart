@@ -278,4 +278,90 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get statNotSynced => 'ಇನ್ನೂ ಸಿಂಕ್ ಆಗಿಲ್ಲ';
+
+  @override
+  String get aiExtractedInformation => 'AI ಹೊರತೆಗೆದ ಮಾಹಿತಿ';
+
+  @override
+  String get reviewIntro =>
+      'ಉಳಿಸುವ ಮೊದಲು AASHANet AI ಹೊರತೆಗೆದ ಮಾಹಿತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ತಿದ್ದಿ.';
+
+  @override
+  String get originalRecord => 'ಮೂಲ ದಾಖಲೆ';
+
+  @override
+  String get aiSuggestedData => 'AI ಸೂಚಿಸಿದ ವಿವರಗಳು';
+
+  @override
+  String get beneficiaryName => 'ಫಲಾನುಭವಿಯ ಹೆಸರು';
+
+  @override
+  String get ageLabel => 'ವಯಸ್ಸು';
+
+  @override
+  String get symptomsLabel => 'ರೋಗಲಕ್ಷಣಗಳು';
+
+  @override
+  String get symptomsHint => 'ರೋಗಲಕ್ಷಣಗಳನ್ನು ಅಲ್ಪವಿರಾಮದಿಂದ ಬೇರ್ಪಡಿಸಿ';
+
+  @override
+  String get durationLabel => 'ಅವಧಿ';
+
+  @override
+  String get confirmAndSave => 'ದೃಢೀಕರಿಸಿ ಮತ್ತು ಉಳಿಸಿ';
+
+  @override
+  String get saving => 'ಉಳಿಸಲಾಗುತ್ತಿದೆ…';
+
+  @override
+  String get enterBeneficiaryName => 'ದಯವಿಟ್ಟು ಫಲಾನುಭವಿಯ ಹೆಸರನ್ನು ನಮೂದಿಸಿ';
+
+  @override
+  String get ageMustBeNumber => 'ವಯಸ್ಸು 0 ರಿಂದ 120 ರ ನಡುವಿನ ಸಂಖ್ಯೆಯಾಗಿರಬೇಕು';
+
+  @override
+  String get aiFilledHint => 'AI ತುಂಬಿದೆ – ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ';
+
+  @override
+  String get ok => 'ಸರಿ';
+
+  @override
+  String get comingSoon => 'ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ';
+
+  @override
+  String get changeLanguage => 'ಭಾಷೆ ಬದಲಿಸಿ';
+
+  @override
+  String get spokenLanguage => 'ರೆಕಾರ್ಡಿಂಗ್‌ನಲ್ಲಿ ಮಾತನಾಡುವ ಭಾಷೆ';
+
+  @override
+  String get recordAgain => 'ಮತ್ತೆ ರೆಕಾರ್ಡ್ ಮಾಡಿ';
+
+  @override
+  String get recordingDiscarded => 'ರೆಕಾರ್ಡಿಂಗ್ ತ್ಯಜಿಸಲಾಗಿದೆ';
+
+  @override
+  String get offlineRecordNotice =>
+      'ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ದಾಖಲೆಯನ್ನು ಈ ಫೋನ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ನೀವು ಮತ್ತೆ ಆನ್‌ಲೈನ್‌ಗೆ ಬಂದಾಗ ಸಂಸ್ಕರಿಸಲಾಗುತ್ತದೆ.';
+
+  @override
+  String get searchRecords => 'ಹೆಸರು ಅಥವಾ ಪಠ್ಯದಿಂದ ಹುಡುಕಿ';
+
+  @override
+  String get filterAll => 'ಎಲ್ಲಾ';
+
+  @override
+  String get filterNeedsReview => 'ಪರಿಶೀಲನೆ ಬಾಕಿ';
+
+  @override
+  String get filterNotSynced => 'ಸಿಂಕ್ ಆಗಿಲ್ಲ';
+
+  @override
+  String get filterConflicts => 'ಸಂಘರ್ಷಗಳು';
+
+  @override
+  String get noMatchingRecords => 'ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಹೊಂದುವ ದಾಖಲೆಗಳಿಲ್ಲ';
+
+  @override
+  String get recordAVisit => 'ಭೇಟಿಯನ್ನು ದಾಖಲಿಸಿ';
 }

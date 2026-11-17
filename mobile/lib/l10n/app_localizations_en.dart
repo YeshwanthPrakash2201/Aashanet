@@ -276,4 +276,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statNotSynced => 'Not yet synced';
+
+  @override
+  String get aiExtractedInformation => 'AI Extracted Information';
+
+  @override
+  String get reviewIntro =>
+      'Review and edit the information extracted by AASHANet AI before saving.';
+
+  @override
+  String get originalRecord => 'Original record';
+
+  @override
+  String get aiSuggestedData => 'AI suggested details';
+
+  @override
+  String get beneficiaryName => 'Beneficiary name';
+
+  @override
+  String get ageLabel => 'Age';
+
+  @override
+  String get symptomsLabel => 'Symptoms';
+
+  @override
+  String get symptomsHint => 'Separate symptoms with commas';
+
+  @override
+  String get durationLabel => 'Duration';
+
+  @override
+  String get confirmAndSave => 'Confirm & Save';
+
+  @override
+  String get saving => 'Saving…';
+
+  @override
+  String get enterBeneficiaryName => 'Please enter the beneficiary name';
+
+  @override
+  String get ageMustBeNumber => 'Age must be a number from 0 to 120';
+
+  @override
+  String get aiFilledHint => 'Filled by AI – please check';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get comingSoon => 'Coming soon';
+
+  @override
+  String get changeLanguage => 'Change language';
+
+  @override
+  String get spokenLanguage => 'Language spoken in the recording';
+
+  @override
+  String get recordAgain => 'Record again';
+
+  @override
+  String get recordingDiscarded => 'Recording discarded';
+
+  @override
+  String get offlineRecordNotice =>
+      'You are offline. The record will be saved on this phone and processed when you are back online.';
+
+  @override
+  String get searchRecords => 'Search by name or text';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterNeedsReview => 'Needs review';
+
+  @override
+  String get filterNotSynced => 'Not synced';
+
+  @override
+  String get filterConflicts => 'Conflicts';
+
+  @override
+  String get noMatchingRecords => 'No records match your search';
+
+  @override
+  String get recordAVisit => 'Record a visit';
 }

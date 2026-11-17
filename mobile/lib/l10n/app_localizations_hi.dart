@@ -279,4 +279,90 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get statNotSynced => 'अभी सिंक नहीं';
+
+  @override
+  String get aiExtractedInformation => 'AI द्वारा निकाली गई जानकारी';
+
+  @override
+  String get reviewIntro =>
+      'सहेजने से पहले AASHANet AI द्वारा निकाली गई जानकारी की जाँच करें और सुधारें।';
+
+  @override
+  String get originalRecord => 'मूल रिकॉर्ड';
+
+  @override
+  String get aiSuggestedData => 'AI द्वारा सुझाए गए विवरण';
+
+  @override
+  String get beneficiaryName => 'लाभार्थी का नाम';
+
+  @override
+  String get ageLabel => 'आयु';
+
+  @override
+  String get symptomsLabel => 'लक्षण';
+
+  @override
+  String get symptomsHint => 'लक्षणों को अल्पविराम से अलग करें';
+
+  @override
+  String get durationLabel => 'अवधि';
+
+  @override
+  String get confirmAndSave => 'पुष्टि करें और सहेजें';
+
+  @override
+  String get saving => 'सहेजा जा रहा है…';
+
+  @override
+  String get enterBeneficiaryName => 'कृपया लाभार्थी का नाम दर्ज करें';
+
+  @override
+  String get ageMustBeNumber => 'आयु 0 से 120 के बीच की संख्या होनी चाहिए';
+
+  @override
+  String get aiFilledHint => 'AI ने भरा है – कृपया जाँचें';
+
+  @override
+  String get ok => 'ठीक है';
+
+  @override
+  String get comingSoon => 'जल्द आ रहा है';
+
+  @override
+  String get changeLanguage => 'भाषा बदलें';
+
+  @override
+  String get spokenLanguage => 'रिकॉर्डिंग में बोली गई भाषा';
+
+  @override
+  String get recordAgain => 'फिर से रिकॉर्ड करें';
+
+  @override
+  String get recordingDiscarded => 'रिकॉर्डिंग हटा दी गई';
+
+  @override
+  String get offlineRecordNotice =>
+      'आप ऑफ़लाइन हैं। रिकॉर्ड इस फ़ोन पर सहेजा जाएगा और ऑनलाइन होने पर संसाधित किया जाएगा।';
+
+  @override
+  String get searchRecords => 'नाम या टेक्स्ट से खोजें';
+
+  @override
+  String get filterAll => 'सभी';
+
+  @override
+  String get filterNeedsReview => 'समीक्षा बाकी';
+
+  @override
+  String get filterNotSynced => 'सिंक नहीं हुआ';
+
+  @override
+  String get filterConflicts => 'टकराव';
+
+  @override
+  String get noMatchingRecords => 'आपकी खोज से मेल खाता कोई रिकॉर्ड नहीं';
+
+  @override
+  String get recordAVisit => 'विज़िट दर्ज करें';
 }
