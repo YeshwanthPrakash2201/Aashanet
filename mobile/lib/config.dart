@@ -15,7 +15,7 @@
 // engine read [baseUrl] from this file.
 
 /// IPv4 address of the PC running the FastAPI backend.
-const String serverIp = '192.168.31.52';
+const String serverIp = '10.90.23.74';
 
 /// Port the backend listens on (`uvicorn ... --port 8000`).
 const int serverPort = 8000;
